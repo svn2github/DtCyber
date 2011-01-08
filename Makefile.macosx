@@ -1,0 +1,93 @@
+#--------------------------------------------------------------------------
+#
+#   Copyright (c) 2003-2009, Tom Hunter, Paul Koning (see license.txt)
+#
+#   Name: Makefile
+#
+#   Description:
+#       Build Mac OS X version of Desktop Cyber emulation.
+#
+#--------------------------------------------------------------------------
+
+SDKDIR	= /Developer/SDKs/MacOSX10.4u.sdk
+LIBS    = -lm -lX11 -lpthread -Wl,-syslibroot,$(SDKDIR)
+LDFLAGS = -s -L/usr/X11R6/lib
+INCL    = -I/usr/X11R6/include -isysroot $(SDKDIR)
+
+G3ARCHFLAGS  = -arch ppc
+G5ARCHFLAGS  = -arch ppc
+X86ARCHFLAGS = -arch i386
+
+G3CFLAGS = -mcpu=G3 -mtune=G3
+G5CFLAGS = -mcpu=G5 -mtune=G5 -falign-loops=16 -falign-functions=16 -falign-labels=16 -mpowerpc64
+X86CFLAGS = -mtune=generic
+
+CFLAGS  = -O3 -std=gnu99 $(INCL) $(ARCHCFLAGS) $(EXTRACFLAGS)
+
+OBJS    =   channel.o               \
+            charset.o               \
+            console.o               \
+            cp3446.o                \
+            cpu.o                   \
+            cr3447.o                \
+            cr405.o                 \
+            dcc6681.o               \
+            dd6603.o                \
+            dd8xx.o                 \
+            ddp.o                   \
+            deadstart.o             \
+            device.o                \
+            dump.o                  \
+            float.o                 \
+            init.o                  \
+            interlock_channel.o     \
+            log.o                   \
+            lp1612.o                \
+            lp3000.o                \
+            main.o                  \
+            maintenance_channel.o   \
+            mt607.o                 \
+            mt669.o                 \
+            mt679.o                 \
+            mux6676.o               \
+            npu_async.o             \
+            npu_bip.o               \
+            npu_hip.o               \
+            npu_net.o               \
+            npu_svm.o               \
+            npu_tip.o               \
+            operator.o              \
+            pci_channel.o           \
+            pp.o                    \
+            rtc.o                   \
+            scr_channel.o           \
+            shift.o                 \
+            tpmux.o                 \
+            trace.o                 \
+            window_x11.o            
+ 
+
+dtcyber:
+	mkdir -p g3; \
+	cd g3; \
+	$(MAKE) -f ../Makefile.macosx gxdtcyber EXTRACFLAGS="$(G3CFLAGS) $(EXTRACFLAGS)" VPATH=.. ARCHCFLAGS="$(G3ARCHFLAGS)" LDFLAGS="$(LDFLAGS) $(G3ARCHFLAGS)"
+	mkdir -p g5; \
+	cd g5; \
+	$(MAKE) -f ../Makefile.macosx gxdtcyber EXTRACFLAGS="$(G5CFLAGS) $(EXTRACFLAGS)" VPATH=..  ARCHCFLAGS="$(G5ARCHFLAGS)" LDFLAGS="$(LDFLAGS) $(G5ARCHFLAGS)"
+	mkdir -p x86; \
+	cd x86 ; \
+	$(MAKE) -f ../Makefile.macosx gxdtcyber EXTRACFLAGS="$(X86CFLAGS) $(EXTRACFLAGS)" VPATH=.. ARCHCFLAGS="$(X86ARCHFLAGS)" LDFLAGS="$(LDFLAGS) $(X86ARCHFLAGS)"
+	lipo -create -output dtcyber g3/gxdtcyber g5/gxdtcyber x86/gxdtcyber
+
+gxdtcyber: $(OBJS)
+	$(CC) $(LDFLAGS) -o $@ $+ $(LIBS)
+
+all: clean dtcyber
+
+clean:
+	rm -rf *.o g3 g5 x86
+
+%.o : %.c
+	$(CC) $(CFLAGS) -c $<
+
+#---------------------------  End Of File  --------------------------------

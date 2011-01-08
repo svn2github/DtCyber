@@ -1,0 +1,75 @@
+#--------------------------------------------------------------------------
+#
+#   Copyright (c) 2003-2009, Tom Hunter (see license.txt)
+#
+#   Name: Makefile
+#
+#   Description:
+#       Build X11 version of Desktop Cyber emulation.
+#
+#--------------------------------------------------------------------------
+
+MODE	= -m64
+LIBS    = -lm -lX11 -lpthread -lsocket -lnsl
+LDFLAGS = -s -L/usr/X11R6/lib $(MODE)
+INCL    = -I/usr/X11R6/include
+
+CFLAGS  = -O2 -I. $(INCL) $(MODE)
+
+OBJS    =   channel.o               \
+            charset.o               \
+            console.o               \
+            cp3446.o                \
+            cpu.o                   \
+            cr3447.o                \
+            cr405.o                 \
+            dcc6681.o               \
+            dd6603.o                \
+            dd8xx.o                 \
+            ddp.o                   \
+            deadstart.o             \
+            device.o                \
+            dump.o                  \
+            float.o                 \
+            init.o                  \
+            interlock_channel.o     \
+            log.o                   \
+            lp1612.o                \
+            lp3000.o                \
+            main.o                  \
+            maintenance_channel.o   \
+            mt607.o                 \
+            mt669.o                 \
+            mt679.o                 \
+            mux6676.o               \
+            npu_async.o             \
+            npu_bip.o               \
+            npu_hip.o               \
+            npu_net.o               \
+            npu_svm.o               \
+            npu_tip.o               \
+            operator.o              \
+            pci_channel.o           \
+            pp.o                    \
+            rtc.o                   \
+            scr_channel.o           \
+            shift.o                 \
+            tpmux.o                 \
+            trace.o                 \
+            window_x11.o            
+ 
+
+all: clean dtcyber
+
+dtcyber: $(OBJS)
+	$(CC) $(LDFLAGS) -o $@ $(OBJS) $(LIBS)
+
+all: clean dtcyber
+
+clean:
+	rm -f *.o
+
+.c.o:
+	$(CC) $(CFLAGS) -c $*.c
+
+#---------------------------  End Of File  --------------------------------
