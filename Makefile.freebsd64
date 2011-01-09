@@ -48,7 +48,6 @@ OBJS    =   channel.o               \
             npu_svm.o               \
             npu_tip.o               \
             operator.o              \
-            pci_channel.o           \
             pp.o                    \
             rtc.o                   \
             scr_channel.o           \

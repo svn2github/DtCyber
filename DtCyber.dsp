@@ -271,8 +271,7 @@ SOURCE=.\const.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\cyber_channel.h
-# PROP Exclude_From_Build 1
+SOURCE=.\cyber_channel_linux.h
 # End Source File
 # Begin Source File
 

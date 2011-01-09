@@ -73,7 +73,10 @@ DevDesc deviceDesc[] =
     "TPM",      tpMuxInit,
     "DDP",      ddpInit,
     "NPU",      npuInit,
+#if defined(__linux__) || defined(__gnu_linux__) || defined(linux) || defined(_WIN32)
+	/* CYBER channel support only on some platforms */
     "PCICH",    pciInit,
+#endif
     };
 
 u8 deviceCount = sizeof(deviceDesc) / sizeof(deviceDesc[0]);
