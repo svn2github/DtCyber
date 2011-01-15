@@ -2,12 +2,25 @@
 #define CONST_H
 /*--------------------------------------------------------------------------
 **
-**  Copyright (c) 2003-2009, Tom Hunter (see license.txt)
+**  Copyright (c) 2003-2011, Tom Hunter
 **
 **  Name: const.h
 **
 **  Description:
 **      This file defines public constants and macros
+**
+**  This program is free software: you can redistribute it and/or modify
+**  it under the terms of the GNU General Public License version 3 as
+**  published by the Free Software Foundation.
+**  
+**  This program is distributed in the hope that it will be useful,
+**  but WITHOUT ANY WARRANTY; without even the implied warranty of
+**  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+**  GNU General Public License version 3 for more details.
+**  
+**  You should have received a copy of the GNU General Public License
+**  version 3 along with this program in file "license-gpl-3.0.txt".
+**  If not, see <http://www.gnu.org/licenses/gpl-3.0.txt>.
 **
 **--------------------------------------------------------------------------
 */
@@ -19,7 +32,9 @@
 */
 #define DtCyberVersion          "Desktop CYBER 5.3.1.pci"
 #define DtCyberCopyright        "Copyright (C) Tom Hunter"
-#define DtCyberLicense          "Licensed to controlfreaks members for hobbyist use only"
+#define DtCyberLicense          "Licensed under the terms of the GNU General Public License version 3"
+#define DtCyberLicenseDetails	"For details see included text file 'license-gpl-3.0.txt' or visit\n" \
+								"'http://www.gnu.org/licenses'"
 
 #ifndef NULL                    
 #define NULL                    ((void *) 0)

@@ -1,11 +1,24 @@
 /*--------------------------------------------------------------------------
 **
-**  Copyright (c) 2003-2009, Tom Hunter (see license.txt)
+**  Copyright (c) 2003-2011, Tom Hunter
 **
 **  Name: pci_channel.c
 **
 **  Description:
 **      Interface to PCI channel adapter.
+**
+**  This program is free software: you can redistribute it and/or modify
+**  it under the terms of the GNU General Public License version 3 as
+**  published by the Free Software Foundation.
+**  
+**  This program is distributed in the hope that it will be useful,
+**  but WITHOUT ANY WARRANTY; without even the implied warranty of
+**  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+**  GNU General Public License version 3 for more details.
+**  
+**  You should have received a copy of the GNU General Public License
+**  version 3 along with this program in file "license-gpl-3.0.txt".
+**  If not, see <http://www.gnu.org/licenses/gpl-3.0.txt>.
 **
 **--------------------------------------------------------------------------
 */
@@ -64,7 +77,7 @@
 */
 typedef struct pciParam
     {
-    int         data;
+	PpWord		data;
     } PciParam;
 
 /*
@@ -81,7 +94,7 @@ static void pciEmpty(void);
 static void pciActivate(void);
 static void pciDisconnect(void);
 static u16 pciFlags(void);
-static void pciCmd(u16 data);
+static void pciCmd(PpWord data);
 static u16 pciStatus(void);
 static u16 pciParity(PpWord val);
 static BOOL GetDevicePath();
@@ -208,7 +221,7 @@ static FcStatus pciFunc(PpWord funcCode)
             funcCode);
 #endif
 
-    pciCmd(PciCmdFunction | funcCode | (pciParity(funcCode) << PciShiftParity));
+    pciCmd((u16)(PciCmdFunction | funcCode | (pciParity(funcCode) << PciShiftParity)));
 
     return(FcAccepted);
     }
@@ -270,7 +283,7 @@ static void pciFull(void)
 #if DEBUG
     fprintf(pciLog, " O(%03X)", pci->data);
 #endif
-    pciCmd(PciCmdFull | pci->data | (pciParity(pci->data) << PciShiftParity));
+    pciCmd((u16)(PciCmdFull | pci->data | (pciParity(pci->data) << PciShiftParity)));
     }
 
 /*--------------------------------------------------------------------------
@@ -354,7 +367,7 @@ static u16 pciFlags(void)
 **  Returns:        nothing
 **
 **------------------------------------------------------------------------*/
-static void pciCmd(u16 data)
+static void pciCmd(PpWord data)
     {
     DWORD bytesReturned;
     u16 status = 0;
@@ -429,7 +442,7 @@ static BOOL GetDevicePath()
     //
     //  Retrieve the device information for all devices.
     //
-    hDevInfo = SetupDiGetClassDevs(&GUID_DEVINTERFACE_CYBER_CHANNEL,
+    hDevInfo = SetupDiGetClassDevs((LPGUID)&GUID_DEVINTERFACE_CYBER_CHANNEL,
                                    NULL,
                                    NULL,
                                    DIGCF_DEVICEINTERFACE |
@@ -446,7 +459,7 @@ static BOOL GetDevicePath()
     count = 0;
     while (SetupDiEnumDeviceInterfaces(hDevInfo,
                                       NULL,
-                                      &GUID_DEVINTERFACE_CYBER_CHANNEL,
+                                      (LPGUID)&GUID_DEVINTERFACE_CYBER_CHANNEL,
                                       count++,  //Cycle through the available devices.
                                       &DeviceInterfaceData)
           );

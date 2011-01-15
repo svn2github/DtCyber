@@ -1,26 +1,29 @@
-/*++
-
-Copyright (c) Microsoft Corporation.  All rights reserved.
-
-    THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY
-    KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
-    IMPLIED WARRANTIES OF MERCHANTABILITY AND/OR FITNESS FOR A PARTICULAR
-    PURPOSE.
-
-Module Name:
-
-    public.h
-
-Abstract:
-
-Environment:
-
-    User & Kernel mode
-
---*/
-
-#ifndef _PUBLIC_H
-#define _PUBLIC_H
+#ifndef CYBER_CHANNEL_WIN32_H
+#define CYBER_CHANNEL_WIN32_H
+/*--------------------------------------------------------------------------
+**
+**  Copyright (c) 2003-2011, Tom Hunter
+**
+**  Name: cyber_channel_win32.h
+**
+**  Description:
+**      CDC CYBER and 6600 channel PCI card driver API for WIN32.
+**
+**  This program is free software: you can redistribute it and/or modify
+**  it under the terms of the GNU General Public License version 3 as
+**  published by the Free Software Foundation.
+**  
+**  This program is distributed in the hope that it will be useful,
+**  but WITHOUT ANY WARRANTY; without even the implied warranty of
+**  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+**  GNU General Public License version 3 for more details.
+**  
+**  You should have received a copy of the GNU General Public License
+**  version 3 along with this program in file "license-gpl-3.0.txt".
+**  If not, see <http://www.gnu.org/licenses/gpl-3.0.txt>.
+**
+**--------------------------------------------------------------------------
+*/
 
 #include <initguid.h>
 
@@ -39,5 +42,8 @@ DEFINE_GUID(GUID_DEVINTERFACE_CYBER_CHANNEL, // Generated using guidgen.exe
 #define IOCTL_CYBER_CHANNEL_PUT CTL_CODE(FILE_DEVICE_CYBER_CHANNEL, IOCTL_INDEX + 0, METHOD_BUFFERED, FILE_ANY_ACCESS)
 #define IOCTL_CYBER_CHANNEL_GET CTL_CODE(FILE_DEVICE_CYBER_CHANNEL, IOCTL_INDEX + 1, METHOD_BUFFERED, FILE_ANY_ACCESS)
 
-#endif
+#endif /* CYBER_CHANNEL_WIN32_H */
+
+/*---------------------------  End Of File  ------------------------------*/
+
 

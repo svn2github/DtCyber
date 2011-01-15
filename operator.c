@@ -1,6 +1,6 @@
 /*--------------------------------------------------------------------------
 **
-**  Copyright (c) 2003-2009, Tom Hunter (see license.txt)
+**  Copyright (c) 2003-2011, Tom Hunter
 **
 **  Name: operator.c
 **
@@ -8,6 +8,19 @@
 **      Provide operator interface for CDC 6600 emulation. This is required
 **      to enable a human "operator" to change tapes, remove paper from the
 **      printer, shutdown etc.
+**
+**  This program is free software: you can redistribute it and/or modify
+**  it under the terms of the GNU General Public License version 3 as
+**  published by the Free Software Foundation.
+**  
+**  This program is distributed in the hope that it will be useful,
+**  but WITHOUT ANY WARRANTY; without even the implied warranty of
+**  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+**  GNU General Public License version 3 for more details.
+**  
+**  You should have received a copy of the GNU General Public License
+**  version 3 along with this program in file "license-gpl-3.0.txt".
+**  If not, see <http://www.gnu.org/licenses/gpl-3.0.txt>.
 **
 **--------------------------------------------------------------------------
 */
@@ -252,8 +265,9 @@ static void *opThread(void *param)
     char *params;
     char *pos;
 
-    printf("\n%s", DtCyberVersion " - " DtCyberCopyright);
-    printf("\n%s", DtCyberLicense);
+    printf("\n%s.", DtCyberVersion " - " DtCyberCopyright);
+    printf("\n%s.", DtCyberLicense);
+    printf("\n%s.", DtCyberLicenseDetails);
     printf("\n\nOperator interface");
     printf("\nPlease enter 'help' to get a list of commands\n");
     printf("\nOperator> ");

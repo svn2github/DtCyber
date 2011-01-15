@@ -1,6 +1,6 @@
 /*--------------------------------------------------------------------------
 **
-**  Copyright (c) 2003-2009, Tom Hunter, Paul Koning (see license.txt)
+**  Copyright (c) 2003-2010, Tom Hunter, Paul Koning
 **
 **  Name: lp3000.c
 **
@@ -13,6 +13,19 @@
 **      501 vs. 512 is selected by which Init function is called from 
 **      init.c via the device table; 3555 is the default but 3152/3256/3659
 **      emulation can be selected by supplying a name string of "3152".
+**
+**  This program is free software: you can redistribute it and/or modify
+**  it under the terms of the GNU General Public License version 3 as
+**  published by the Free Software Foundation.
+**  
+**  This program is distributed in the hope that it will be useful,
+**  but WITHOUT ANY WARRANTY; without even the implied warranty of
+**  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+**  GNU General Public License version 3 for more details.
+**  
+**  You should have received a copy of the GNU General Public License
+**  version 3 along with this program in file "license-gpl-3.0.txt".
+**  If not, see <http://www.gnu.org/licenses/gpl-3.0.txt>.
 **
 **--------------------------------------------------------------------------
 */
