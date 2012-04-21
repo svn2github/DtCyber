@@ -28,6 +28,12 @@ INCL    = -I/usr/X11R6/include
 
 CFLAGS  = -O2 -I. $(INCL) -std=gnu99
 
+HDRS	=	const.h					\
+            cyber_channel_linux.h	\
+			npu.h					\
+			proto.h					\
+			types.h
+
 OBJS    =   channel.o               \
             charset.o               \
             console.o               \
@@ -70,9 +76,6 @@ OBJS    =   channel.o               \
             trace.o                 \
             window_x11.o            
  
-
-all: clean dtcyber
-
 dtcyber: $(OBJS)
 	$(CC) $(LDFLAGS) -o $@ $(OBJS) $(LIBS)
 
@@ -81,7 +84,7 @@ all: clean dtcyber
 clean:
 	rm -f *.o
 
-.c.o:
-	$(CC) $(CFLAGS) -c $*.c
+%.o : %.c $(HDRS)
+	$(CC) $(CFLAGS) -c $<
 
 #---------------------------  End Of File  --------------------------------
