@@ -28,11 +28,11 @@ INCL    = -I/usr/X11R6/include
 
 CFLAGS  = -O2 -I. $(INCL) -std=gnu99
 
-HDRS	=	const.h					\
-            cyber_channel_linux.h	\
-			npu.h					\
-			proto.h					\
-			types.h
+HDRS	=   const.h		    \
+            cyber_channel_linux.h   \
+	    npu.h		    \
+	    proto.h		    \
+	    types.h
 
 OBJS    =   channel.o               \
             charset.o               \

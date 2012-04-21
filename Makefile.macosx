@@ -37,10 +37,11 @@ X86CFLAGS = -mtune=generic
 
 CFLAGS  = -O3 -std=gnu99 $(INCL) $(ARCHCFLAGS) $(EXTRACFLAGS)
 
-HDRS	=	const.h					\
-			types.h					\
-			proto.h					\
-			npu.h
+HDRS	=   const.h		    \
+            cyber_channel_linux.h   \
+	    npu.h		    \
+	    proto.h		    \
+	    types.h
 
 OBJS    =   channel.o               \
             charset.o               \
