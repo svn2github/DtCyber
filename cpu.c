@@ -41,6 +41,9 @@
 **  -----------------
 */
 
+/* Only enable this for testing to pass section 4.A of EJT (divide break-in test) */
+#define CcSMM_EJT               1
+
 /*
 **  CPU exit conditions.
 */
@@ -202,6 +205,10 @@ static u32 acc24;
 static bool floatException = FALSE;
 
 static int debugCount = 0;
+
+#if CcSMM_EJT
+static int skipStep = 0;
+#endif
 
 /*
 **  Opcode decode and dispatch table.
@@ -723,6 +730,14 @@ void cpuStep(void)
         return;
         }
 
+#if CcSMM_EJT
+    if (skipStep != 0)
+        {
+        skipStep -= 1;
+        return;
+        }
+#endif
+
     /*
     **  Execute one CM word atomically.
     */
@@ -937,15 +952,14 @@ bool cpuDdpTransfer(u32 ecsAddress, CpWord *data, bool writeToEcs)
 static void cpuOpIllegal(void)
     {
     cpuStopped = TRUE;
-
     if (cpu.regRaCm < cpuMaxMemory)
         {
-        cpMem[cpu.regRaCm] = ((CpWord)cpu.exitCondition << 48) | ((CpWord)(cpu.regP) << 30);
+        cpMem[cpu.regRaCm] = ((CpWord)cpu.exitCondition << 48) | ((CpWord)(cpu.regP + 1) << 30);
         }
 
     cpu.regP = 0;
 
-    if (!cpu.monitorMode)
+    if ((features & HasNoCejMej) == 0 && !cpu.monitorMode)
         {
         /*
         **  Exchange jump to MA.
@@ -982,12 +996,16 @@ static bool cpuCheckOpAddress(u32 address, u32 *location)
         cpu.exitCondition |= EcAddressOutOfRange;
         if (cpu.regRaCm < cpuMaxMemory)
             {
-            cpMem[cpu.regRaCm] = ((CpWord)cpu.exitCondition << 48) | ((CpWord)(cpu.regP) << 30);
+            // not need for RNI or branch - how about other uses?
+            if ((cpu.exitMode & EmAddressOutOfRange) != 0)
+                {
+                cpMem[cpu.regRaCm] = ((CpWord)cpu.exitCondition << 48) | ((CpWord)(cpu.regP) << 30);
+                }
             }
 
         cpu.regP = 0;
     
-        if (!cpu.monitorMode)
+        if ((features & HasNoCejMej) == 0 && !cpu.monitorMode)
             {
             /*
             **  Exchange jump to MA.
@@ -1193,7 +1211,7 @@ static bool cpuReadMem(u32 address, CpWord *data)
                 *data = 0;
                 }
 
-            if (!cpu.monitorMode)
+            if ((features & HasNoCejMej) == 0 && !cpu.monitorMode)
                 {
                 /*
                 **  Exchange jump to MA.
@@ -1267,7 +1285,7 @@ static bool cpuWriteMem(u32 address, CpWord *data)
 
             cpu.regP = 0;
 
-            if (!cpu.monitorMode)
+            if ((features & HasNoCejMej) == 0 && !cpu.monitorMode)
                 {
                 /*
                 **  Exchange jump to MA.
@@ -1482,7 +1500,7 @@ static void cpuUemWord(bool writeToUem)
 
             cpu.regP = 0;
 
-            if (!cpu.monitorMode)
+            if ((features & HasNoCejMej) == 0 && !cpu.monitorMode)
                 {
                 /*
                 **  Exchange jump to MA.
@@ -1571,7 +1589,7 @@ static void cpuEcsWord(bool writeToEcs)
 
             cpu.regP = 0;
 
-            if (!cpu.monitorMode)
+            if ((features & HasNoCejMej) == 0 && !cpu.monitorMode)
                 {
                 /*
                 **  Exchange jump to MA.
@@ -1685,7 +1703,7 @@ static void cpuUemTransfer(bool writeToUem)
 
             cpu.regP = 0;
 
-            if (!cpu.monitorMode)
+            if ((features & HasNoCejMej) == 0 && !cpu.monitorMode)
                 {
                 /*
                 **  Exchange jump to MA.
@@ -1876,7 +1894,7 @@ static void cpuEcsTransfer(bool writeToEcs)
 
             cpu.regP = 0;
 
-            if (!cpu.monitorMode)
+            if ((features & HasNoCejMej) == 0 && !cpu.monitorMode)
                 {
                 /*
                 **  Exchange jump to MA.
@@ -2004,7 +2022,7 @@ static bool cpuCmuGetByte(u32 address, u32 pos, u8 *byte)
 
             cpu.regP = 0;
 
-            if (!cpu.monitorMode)
+            if ((features & HasNoCejMej) == 0 && !cpu.monitorMode)
                 {
                 /*
                 **  Exchange jump to MA.
@@ -2072,7 +2090,7 @@ static bool cpuCmuPutByte(u32 address, u32 pos, u8 byte)
 
             cpu.regP = 0;
 
-            if (!cpu.monitorMode)
+            if ((features & HasNoCejMej) == 0 && !cpu.monitorMode)
                 {
                 /*
                 **  Exchange jump to MA.
@@ -2173,7 +2191,7 @@ static void cpuCmuMoveIndirect(void)
 
             cpu.regP = 0;
 
-            if (!cpu.monitorMode)
+            if ((features & HasNoCejMej) == 0 && !cpu.monitorMode)
                 {
                 /*
                 **  Exchange jump to MA.
@@ -2287,7 +2305,7 @@ static void cpuCmuMoveDirect(void)
 
             cpu.regP = 0;
 
-            if (!cpu.monitorMode)
+            if ((features & HasNoCejMej) == 0 && !cpu.monitorMode)
                 {
                 /*
                 **  Exchange jump to MA.
@@ -2406,7 +2424,7 @@ static void cpuCmuCompareCollated(void)
 
             cpu.regP = 0;
 
-            if (!cpu.monitorMode)
+            if ((features & HasNoCejMej) == 0 && !cpu.monitorMode)
                 {
                 /*
                 **  Exchange jump to MA.
@@ -2554,7 +2572,7 @@ static void cpuCmuCompareUncollated(void)
 
             cpu.regP = 0;
 
-            if (!cpu.monitorMode)
+            if ((features & HasNoCejMej) == 0 && !cpu.monitorMode)
                 {
                 /*
                 **  Exchange jump to MA.
@@ -2691,7 +2709,7 @@ static void cpuFloatExceptionHandler(void)
 
             cpu.regP = 0;
 
-            if (!cpu.monitorMode)
+            if ((features & HasNoCejMej) == 0 && !cpu.monitorMode)
                 {
                 /*
                 **  Exchange jump to MA.
@@ -2823,6 +2841,12 @@ static void cpOp01(void)
         break;
 
     case 4:
+        if (modelType != ModelCyber865)
+            {
+            cpuOpIllegal();
+            return;
+            }
+
         /*
         **  RXj  Xk
         */
@@ -2838,6 +2862,12 @@ static void cpOp01(void)
         break;
 
     case 5:
+        if (modelType != ModelCyber865)
+            {
+            cpuOpIllegal();
+            return;
+            }
+
         /*
         **  WXj  Xk
         */
@@ -2860,6 +2890,10 @@ static void cpOp01(void)
             */
             rtcReadUsCounter();
             cpu.regX[opJ] = rtcClock;
+            }
+        else
+            {
+            cpuOpIllegal();
             }
 
         break;
@@ -3444,6 +3478,9 @@ static void cpOp44(void)
     cpuFloatCheck(cpu.regX[opK]);
     cpu.regX[opI] = floatDivide(cpu.regX[opJ], cpu.regX[opK], FALSE);
     cpuFloatExceptionHandler();
+#if CcSMM_EJT
+    skipStep = 20;
+#endif
     }
 
 static void cpOp45(void)
