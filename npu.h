@@ -368,6 +368,7 @@ typedef struct tcb
     NpuQueue            outputQ;
     bool                xoff;
     bool                dbcNoEchoplex;
+    bool                dbcNoCursorPos;
     } Tcb;
 
 /*

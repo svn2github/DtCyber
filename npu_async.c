@@ -142,7 +142,8 @@ void npuAsyncProcessDownlineData(u8 cn, NpuBuffer *bp, bool last)
     */
     dbc = *blk++;
     len -= 1;
-    npuTp->dbcNoEchoplex = (dbc & DbcEchoplex) != 0;
+    npuTp->dbcNoEchoplex  = (dbc & DbcEchoplex)    != 0;
+    npuTp->dbcNoCursorPos = (dbc & DbcNoCursorPos) != 0;
 
     if ((dbc & DbcTransparent) != 0)
         {
@@ -587,25 +588,32 @@ static void npuAsyncProcessUplineAscii(Tcb *tp)
             /*
             **  Perform cursor positioning.
             */
-            if (tp->params.fvCursorPos)
+            if (tp->dbcNoCursorPos)
                 {
-                switch (tp->params.fvEOLCursorPos)
+                tp->dbcNoCursorPos = FALSE;
+                }
+            else
+                {
+                if (tp->params.fvCursorPos)
                     {
-                case 0:
-                    break;
+                    switch (tp->params.fvEOLCursorPos)
+                        {
+                    case 0:
+                        break;
 
-                case 1:
-                    *echoPtr++ = ChrCR;
-                    break;
+                    case 1:
+                        *echoPtr++ = ChrCR;
+                        break;
 
-                case 2:
-                    *echoPtr++ = ChrLF;
-                    break;
+                    case 2:
+                        *echoPtr++ = ChrLF;
+                        break;
 
-                case 3:
-                    *echoPtr++ = ChrCR;
-                    *echoPtr++ = ChrLF;
-                    break;
+                    case 3:
+                        *echoPtr++ = ChrCR;
+                        *echoPtr++ = ChrLF;
+                        break;
+                        }
                     }
                 }
 
@@ -811,24 +819,31 @@ static void npuAsyncProcessUplineSpecial(Tcb *tp)
             /*
             **  Perform cursor positioning.
             */
-            if (tp->params.fvCursorPos)
+            if (tp->dbcNoCursorPos)
                 {
-                switch (tp->params.fvEOLCursorPos)
+                tp->dbcNoCursorPos = FALSE;
+                }
+            else
+                {
+                if (tp->params.fvCursorPos)
                     {
-                case 0:
-                    break;
+                    switch (tp->params.fvEOLCursorPos)
+                        {
+                    case 0:
+                        break;
 
-                case 1:
-                    npuNetSend(tp, netCR, sizeof(netCR));
-                    break;
+                    case 1:
+                        npuNetSend(tp, netCR, sizeof(netCR));
+                        break;
 
-                case 2:
-                    npuNetSend(tp, netLF, sizeof(netLF));
-                    break;
+                    case 2:
+                        npuNetSend(tp, netLF, sizeof(netLF));
+                        break;
 
-                case 3:
-                    npuNetSend(tp, netCRLF, sizeof(netCRLF));
-                    break;
+                    case 3:
+                        npuNetSend(tp, netCRLF, sizeof(netCRLF));
+                        break;
+                        }
                     }
                 }
 
@@ -1018,24 +1033,31 @@ static void npuAsyncProcessUplineNormal(Tcb *tp)
             /*
             **  Perform cursor positioning.
             */
-            if (tp->params.fvCursorPos)
+            if (tp->dbcNoCursorPos)
                 {
-                switch (tp->params.fvEOLCursorPos)
+                tp->dbcNoCursorPos = FALSE;
+                }
+            else
+                {
+                if (tp->params.fvCursorPos)
                     {
-                case 0:
-                    break;
+                    switch (tp->params.fvEOLCursorPos)
+                        {
+                    case 0:
+                        break;
 
-                case 1:
-                    npuNetSend(tp, netCR, sizeof(netCR));
-                    break;
+                    case 1:
+                        npuNetSend(tp, netCR, sizeof(netCR));
+                        break;
 
-                case 2:
-                    npuNetSend(tp, netLF, sizeof(netLF));
-                    break;
+                    case 2:
+                        npuNetSend(tp, netLF, sizeof(netLF));
+                        break;
 
-                case 3:
-                    npuNetSend(tp, netCRLF, sizeof(netCRLF));
-                    break;
+                    case 3:
+                        npuNetSend(tp, netCRLF, sizeof(netCRLF));
+                        break;
+                        }
                     }
                 }
 
