@@ -382,7 +382,7 @@ static u64 rtcGetTick(void)
     struct timeval tv;
 
     gettimeofday(&tv, NULL);
-    return(tv.tv_sec * 1000000 + tv.tv_usec);
+    return(tv.tv_sec * 1000000ULL + tv.tv_usec);
     }
 
 #elif defined(__GNUC__) && defined(__APPLE__)
