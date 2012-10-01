@@ -369,6 +369,7 @@ typedef struct tcb
     bool                xoff;
     bool                dbcNoEchoplex;
     bool                dbcNoCursorPos;
+    bool                lastOpWasInput;
     } Tcb;
 
 /*

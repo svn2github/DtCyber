@@ -314,15 +314,36 @@ static void npuAsyncDoFeBefore(u8 fe)
     switch (fe)
         {
     case ' ':
-        npuNetSend(npuTp, fcSingleSpace, sizeof(fcSingleSpace) - 1);
+        if (npuTp->lastOpWasInput)
+            {
+            npuNetSend(npuTp, fcBol, sizeof(fcBol) - 1);
+            }
+        else
+            {
+            npuNetSend(npuTp, fcSingleSpace, sizeof(fcSingleSpace) - 1);
+            }
         break;
 
     case '0':
-        npuNetSend(npuTp, fcDoubleSpace, sizeof(fcDoubleSpace) - 1);
+        if (npuTp->lastOpWasInput)
+            {
+            npuNetSend(npuTp, fcSingleSpace, sizeof(fcSingleSpace) - 1);
+            }
+        else
+            {
+            npuNetSend(npuTp, fcDoubleSpace, sizeof(fcDoubleSpace) - 1);
+            }
         break;
 
     case '-':
-        npuNetSend(npuTp, fcTripleSpace, sizeof(fcTripleSpace) - 1);
+        if (npuTp->lastOpWasInput)
+            {
+            npuNetSend(npuTp, fcDoubleSpace, sizeof(fcDoubleSpace) - 1);
+            }
+        else
+            {
+            npuNetSend(npuTp, fcTripleSpace, sizeof(fcTripleSpace) - 1);
+            }
         break;
 
     case '+':
@@ -371,6 +392,8 @@ static void npuAsyncDoFeBefore(u8 fe)
         */
         break;
         }
+
+    npuTp->lastOpWasInput = FALSE;
     }
 
 /*--------------------------------------------------------------------------
@@ -1008,6 +1031,7 @@ static void npuAsyncProcessUplineNormal(Tcb *tp)
             */
             npuBipRequestUplineCanned(tp->inBuf, tp->inBufPtr - tp->inBuf);
             npuTipInputReset(tp);
+            tp->lastOpWasInput = TRUE;
 
             /*
             **  Optionally echo characters.

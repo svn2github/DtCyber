@@ -30,7 +30,7 @@
 **  Public Constants
 **  ----------------
 */
-#define DtCyberVersion          "Desktop CYBER 5.3.2"
+#define DtCyberVersion          "Desktop CYBER 5.3.3"
 #define DtCyberCopyright        "Copyright (C) Tom Hunter"
 #define DtCyberLicense          "Licensed under the terms of the GNU General Public License version 3"
 #define DtCyberLicenseDetails	"For details see included text file 'license-gpl-3.0.txt' or visit\n" \
