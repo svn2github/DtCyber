@@ -243,6 +243,13 @@ void rtcReadUsCounter(void)
 
     new = rtcGetTick();
 
+    if ((i64)new < (i64)old)
+        {
+        /* Ignore ticks if they go backward */
+        old = new;
+        return;
+        }
+
     difference = new - old;
     old = new;
 
@@ -382,7 +389,7 @@ static u64 rtcGetTick(void)
     struct timeval tv;
 
     gettimeofday(&tv, NULL);
-    return(tv.tv_sec * 1000000ULL + tv.tv_usec);
+    return((u64)tv.tv_sec * (u64)1000000 + (u64)tv.tv_usec);
     }
 
 #elif defined(__GNUC__) && defined(__APPLE__)
