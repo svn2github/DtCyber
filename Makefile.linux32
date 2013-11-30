@@ -68,6 +68,7 @@ OBJS    =   channel.o               \
             npu_tip.o               \
             operator.o              \
             pci_channel_linux.o     \
+            pci_console_linux.o     \
             pp.o                    \
             rtc.o                   \
             scr_channel.o           \

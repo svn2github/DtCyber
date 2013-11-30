@@ -192,6 +192,11 @@ int npuBipBufCount(void);
 void pciInit(u8 eqNo, u8 unitNo, u8 channelNo, char *deviceName);
 
 /*
+**  pci_console_linux.c
+*/
+void pciConsoleInit(u8 eqNo, u8 unitNo, u8 channelNo, char *deviceName);
+
+/*
 **  tpmux.c
 */
 void tpMuxInit(u8 eqNo, u8 unitNo, u8 channelNo, char *deviceName);

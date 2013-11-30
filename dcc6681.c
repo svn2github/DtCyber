@@ -383,7 +383,6 @@ static FcStatus dcc6681Func(PpWord funcCode)
             }
         active3000Device = mp->device3000[e];
         activeDevice->fcode = funcCode;
-        funcCode &= Fc6681IoModeMask;
         return((active3000Device->func)(funcCode));
 
     case Fc6681InputToEor:

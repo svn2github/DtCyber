@@ -90,6 +90,10 @@ DevDesc deviceDesc[] =
 	/* CYBER channel support only on some platforms */
     "PCICH",    pciInit,
 #endif
+#if defined(__linux__) || defined(__gnu_linux__) || defined(linux)
+	/* CYBER channel support only on some platforms */
+    "PCICON",    pciConsoleInit,
+#endif
     };
 
 u8 deviceCount = sizeof(deviceDesc) / sizeof(deviceDesc[0]);
