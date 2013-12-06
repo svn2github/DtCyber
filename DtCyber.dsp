@@ -230,6 +230,11 @@ SOURCE=.\pci_channel_win32.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\pci_console_linux.c
+# PROP Exclude_From_Build 1
+# End Source File
+# Begin Source File
+
 SOURCE=.\pp.c
 # End Source File
 # Begin Source File

@@ -146,6 +146,22 @@ static bool active = FALSE;
 #endif
 
 /*
+**  Map the broken keyboard codes from the LCM's DD60 console to what they should be.
+**  Note that other consoles won't need this.
+*/
+static const u8 serial2ToConsole[64] =
+    {
+    /* 00-07 */   0,  01,  02,  03,  04,  05,  06,  07,
+    /* 10-17 */ 010, 011, 012, 013, 014, 015, 016, 017,
+    /* 20-27 */ 020, 021, 022, 023, 024, 025, 026, 027,
+    /* 30-37 */ 030, 031, 032,   0,   0, 060,   0,   0,
+    /* 40-47 */ 062, 061,   0,   0, 053,   0,   0,   0, 
+    /* 50-57 */ 051, 052, 047, 045, 056, 046, 057, 050,
+    /* 60-67 */ 033, 034, 035, 036, 037, 040, 041, 042,
+    /* 70-77 */   0,   0,   0, 044, 043,   0, 055, 054
+    };
+
+/*
 **--------------------------------------------------------------------------
 **
 **  Public Functions
@@ -279,10 +295,9 @@ static PpWord pciIn(void)
     {
     PpWord data = 0;
 
-    // Comment out the next line if no console is connected
-    data = pciStatus() & Mask12;
+    // Comment out the following line if no console is connected
+    data = serial2ToConsole[pciStatus() & Mask6];
 
-//    if (activeDevice->fcode == Fc6612SelKeyIn && (data & PciStaFull) != 0)
     if (activeDevice->fcode == Fc6612SelKeyIn)
         {
         data |= asciiToConsole[ppKeyIn];
