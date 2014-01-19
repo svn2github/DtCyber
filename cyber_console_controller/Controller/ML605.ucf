@@ -1,0 +1,186 @@
+##--------------------------------------------------------------------------
+##
+##  Copyright (c) 2013, Tom Hunter
+##
+##  Project     : CDC 6612 display controller
+##  File        : ml605.ucf
+##  Description : User constraint file
+##
+##  This program is free software: you can redistribute it and/or modify
+##  it under the terms of the GNU General Public License version 3 as
+##  published by the Free Software Foundation.
+##  
+##  This program is distributed in the hope that it will be useful,
+##  but WITHOUT ANY WARRANTY; without even the implied warranty of
+##  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+##  GNU General Public License version 3 for more details.
+##  
+##  You should have received a copy of the GNU General Public License
+##  version 3 along with this program in file "license-gpl-3.0.txt".
+##  If not, see <http://www.gnu.org/licenses/gpl-3.0.txt>.
+##
+##--------------------------------------------------------------------------
+
+CONFIG PART = xc6vlx240t-ff1156-1;
+
+#
+# SYS reset (input) signal.
+#
+
+NET "sys_reset_n" TIG;
+NET "sys_reset_n" LOC = AE13 | IOSTANDARD = LVCMOS25 | PULLUP | NODELAY;
+
+#
+# SYS clock 250 MHz (input) signal. The sys_clk_p and sys_clk_n
+# signals are the PCI Express reference clock.
+#
+
+#NET "sys_clk_p" LOC = V6;
+#NET "sys_clk_n" LOC = V5;
+INST "refclk_ibuf" LOC = IBUFDS_GTXE1_X0Y4;
+
+#
+# Transceiver instance placement.  This constraint selects the
+# transceivers to be used, which also dictates the pinout for the
+# transmit and receive differential pairs.
+#
+INST "core*/pcie_2_0_i/pcie_gt_i/gtx_v6_i/GTXD[0].GTX" LOC = GTXE1_X0Y15;
+INST "core*/pcie_2_0_i/pcie_gt_i/gtx_v6_i/GTXD[1].GTX" LOC = GTXE1_X0Y14;
+INST "core*/pcie_2_0_i/pcie_gt_i/gtx_v6_i/GTXD[2].GTX" LOC = GTXE1_X0Y13;
+INST "core*/pcie_2_0_i/pcie_gt_i/gtx_v6_i/GTXD[3].GTX" LOC = GTXE1_X0Y12;
+INST "core*/pcie_2_0_i/pcie_gt_i/gtx_v6_i/GTXD[4].GTX" LOC = GTXE1_X0Y11;
+INST "core*/pcie_2_0_i/pcie_gt_i/gtx_v6_i/GTXD[5].GTX" LOC = GTXE1_X0Y10;
+INST "core*/pcie_2_0_i/pcie_gt_i/gtx_v6_i/GTXD[6].GTX" LOC = GTXE1_X0Y9;
+INST "core*/pcie_2_0_i/pcie_gt_i/gtx_v6_i/GTXD[7].GTX" LOC = GTXE1_X0Y8;
+
+#
+# PCI Express Block placement. This constraint selects the PCI Express
+# Block to be used.
+#
+INST "core*/pcie_2_0_i/pcie_block_i" LOC = PCIE_X0Y1;
+
+#
+# MMCM Placment. This constraint selects the MMCM Placement
+#
+INST "core*/pcie_clocking_i/mmcm_adv_i" LOC = MMCM_ADV_X0Y7;
+
+#
+# User Inputs
+#
+NET "USER_CLOCK"               LOC = "U23";    ## 5   on X5
+
+NET "gpio_dip_sw<1>"           LOC = "D22" | IOSTANDARD = LVCMOS25;
+NET "gpio_dip_sw<2>"           LOC = "C22" | IOSTANDARD = LVCMOS25;
+NET "gpio_dip_sw<3>"           LOC = "L21" | IOSTANDARD = LVCMOS25;
+NET "gpio_dip_sw<4>"           LOC = "L20" | IOSTANDARD = LVCMOS25;
+NET "gpio_dip_sw<5>"           LOC = "C18" | IOSTANDARD = LVCMOS25;
+NET "gpio_dip_sw<6>"           LOC = "B18" | IOSTANDARD = LVCMOS25;
+NET "gpio_dip_sw<7>"           LOC = "K22" | IOSTANDARD = LVCMOS25;
+NET "gpio_dip_sw<8>"           LOC = "K21" | IOSTANDARD = LVCMOS25;
+
+NET "key_down"                 LOC = "E31" | IOSTANDARD = LVCMOS25; ## FMC LPC D9
+NET "key_up"                   LOC = "F31" | IOSTANDARD = LVCMOS25; ## FMC LPC D8
+
+# NET "key_code<0>"              LOC = "G30" | IOSTANDARD = LVCMOS25; ## FMC LPC C15
+# NET "key_code<1>"              LOC = "F30" | IOSTANDARD = LVCMOS25; ## FMC LPC C14
+# NET "key_code<2>"              LOC = "H33" | IOSTANDARD = LVCMOS25; ## FMC LPC D12 
+# NET "key_code<3>"              LOC = "H34" | IOSTANDARD = LVCMOS25; ## FMC LPC D11
+# NET "key_code<4>"              LOC = "J34" | IOSTANDARD = LVCMOS25; ## FMC LPC C11
+# NET "key_code<5>"              LOC = "K33" | IOSTANDARD = LVCMOS25; ## FMC LPC C10
+                                           
+NET "key_code<0>"              LOC = "J34" | IOSTANDARD = LVCMOS25; ## FMC LPC C11
+NET "key_code<1>"              LOC = "H33" | IOSTANDARD = LVCMOS25; ## FMC LPC D12
+NET "key_code<2>"              LOC = "K33" | IOSTANDARD = LVCMOS25; ## FMC LPC C10 
+NET "key_code<3>"              LOC = "F30" | IOSTANDARD = LVCMOS25; ## FMC LPC C14
+NET "key_code<4>"              LOC = "G30" | IOSTANDARD = LVCMOS25; ## FMC LPC C15
+NET "key_code<5>"              LOC = "H34" | IOSTANDARD = LVCMOS25; ## FMC LPC D11
+                                           
+#
+# User Outputs
+#
+NET "gpio_led_n"               LOC = "AH27" | IOSTANDARD = LVCMOS25;
+
+NET "gpio_led<0>"              LOC = "AC22" | IOSTANDARD = LVCMOS25;
+NET "gpio_led<1>"              LOC = "AC24" | IOSTANDARD = LVCMOS25;
+NET "gpio_led<2>"              LOC = "AE22" | IOSTANDARD = LVCMOS25;
+NET "gpio_led<3>"              LOC = "AE23" | IOSTANDARD = LVCMOS25;
+NET "gpio_led<4>"              LOC = "AB23" | IOSTANDARD = LVCMOS25;
+NET "gpio_led<5>"              LOC = "AG23" | IOSTANDARD = LVCMOS25;
+NET "gpio_led<6>"              LOC = "AE24" | IOSTANDARD = LVCMOS25;
+NET "gpio_led<7>"              LOC = "AD24" | IOSTANDARD = LVCMOS25;
+
+NET "size_small"               LOC = "H32" | IOSTANDARD = LVCMOS25; ## FMC LPC H14
+NET "size_medium"              LOC = "G32" | IOSTANDARD = LVCMOS25; ## FMC LPC H13
+                                           
+NET "unblank_left"             LOC = "E32" | IOSTANDARD = LVCMOS25; ## FMC LPC G15
+NET "unblank_right"            LOC = "K29" | IOSTANDARD = LVCMOS25; ## FMC LPC G13
+                                           
+NET "pos_ver<0>"               LOC = "J29" | IOSTANDARD = LVCMOS25; ## FMC LPC H11
+NET "pos_ver<1>"               LOC = "K28" | IOSTANDARD = LVCMOS25; ## FMC LPC H10
+NET "pos_ver<2>"               LOC = "J32" | IOSTANDARD = LVCMOS25; ## FMC LPC G10
+NET "pos_ver<3>"               LOC = "J31" | IOSTANDARD = LVCMOS25; ## FMC LPC G9
+NET "pos_ver<4>"               LOC = "H30" | IOSTANDARD = LVCMOS25; ## FMC LPC H8
+NET "pos_ver<5>"               LOC = "G31" | IOSTANDARD = LVCMOS25; ## FMC LPC H7
+NET "pos_ver<6>"               LOC = "K27" | IOSTANDARD = LVCMOS25; ## FMC LPC G7
+NET "pos_ver<7>"               LOC = "K26" | IOSTANDARD = LVCMOS25; ## FMC LPC G6
+NET "pos_ver<8>"               LOC = "J30" | IOSTANDARD = LVCMOS25; ## FMC LPC G12
+                                       
+NET "pos_hor<0>"               LOC = "A33" | IOSTANDARD = LVCMOS25; ## FMC LPC G18
+NET "pos_hor<1>"               LOC = "C33" | IOSTANDARD = LVCMOS25; ## FMC LPC C18
+NET "pos_hor<2>"               LOC = "D32" | IOSTANDARD = LVCMOS25; ## FMC LPC H17
+NET "pos_hor<3>"               LOC = "D31" | IOSTANDARD = LVCMOS25; ## FMC LPC H16
+NET "pos_hor<4>"               LOC = "C34" | IOSTANDARD = LVCMOS25; ## FMC LPC D18
+NET "pos_hor<5>"               LOC = "D34" | IOSTANDARD = LVCMOS25; ## FMC LPC D17
+NET "pos_hor<6>"               LOC = "L26" | IOSTANDARD = LVCMOS25; ## FMC LPC D15
+NET "pos_hor<7>"               LOC = "L25" | IOSTANDARD = LVCMOS25; ## FMC LPC D14
+NET "pos_hor<8>"               LOC = "E33" | IOSTANDARD = LVCMOS25; ## FMC LPC G16
+                                           
+NET "hor_clk"                  LOC = "M30" | IOSTANDARD = LVCMOS25; ## FMC LPC H22
+NET "ver_clk"                  LOC = "P34" | IOSTANDARD = LVCMOS25; ## FMC LPC G31
+                                           
+NET "hor_data<0>"              LOC = "N30" | IOSTANDARD = LVCMOS25; ## FMC LPC H23
+NET "hor_data<1>"              LOC = "L29" | IOSTANDARD = LVCMOS25; ## FMC LPC C22
+NET "hor_data<2>"              LOC = "L30" | IOSTANDARD = LVCMOS25; ## FMC LPC C23
+NET "hor_data<3>"              LOC = "R27" | IOSTANDARD = LVCMOS25; ## FMC LPC D24
+NET "hor_data<4>"              LOC = "N27" | IOSTANDARD = LVCMOS25; ## FMC LPC G24
+NET "hor_data<5>"              LOC = "T26" | IOSTANDARD = LVCMOS25; ## FMC LPC H26
+NET "hor_data<6>"              LOC = "R31" | IOSTANDARD = LVCMOS25; ## FMC LPC C26
+NET "hor_data<7>"              LOC = "L33" | IOSTANDARD = LVCMOS25; ## FMC LPC D26
+                                         
+NET "ver_data<0>"              LOC = "N33" | IOSTANDARD = LVCMOS25; ## FMC LPC H31
+NET "ver_data<1>"              LOC = "M31" | IOSTANDARD = LVCMOS25; ## FMC LPC G33
+NET "ver_data<2>"              LOC = "L31" | IOSTANDARD = LVCMOS25; ## FMC LPC G34
+NET "ver_data<3>"              LOC = "M26" | IOSTANDARD = LVCMOS25; ## FMC LPC H34
+NET "ver_data<4>"              LOC = "M27" | IOSTANDARD = LVCMOS25; ## FMC LPC H35
+NET "ver_data<5>"              LOC = "N25" | IOSTANDARD = LVCMOS25; ## FMC LPC H37
+NET "ver_data<6>"              LOC = "K31" | IOSTANDARD = LVCMOS25; ## FMC LPC G37
+NET "ver_data<7>"              LOC = "M25" | IOSTANDARD = LVCMOS25; ## FMC LPC H38
+                                           
+#
+# Timing Constraints
+#
+
+#### NOTE THERE IS ALSO A SUBSET OF THESE IN "xilinx_pcie_2_0_ep_v6.xcf" CHECK IT OUT !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+NET "USER_CLOCK" TNM_NET = USER_CLOCK;
+NET "clk_10mhz" TNM_NET = "CYBER_CLK";
+NET "sys_clk_c" TNM_NET = "SYSCLK";
+NET "core*/pcie_clocking_i/clk_125" TNM_NET = "CLK_125";
+NET "core*/TxOutClk_bufg" TNM_NET = "TXOUTCLKBUFG";
+NET "core*/pcie_clocking_i/clk_250" TNM_NET = "CLK_250";
+
+TIMESPEC "TS_USER_CLOCK" = PERIOD "USER_CLOCK" 15.151 ns HIGH 50 %;
+TIMESPEC "TS_CYBER_CLK" = PERIOD "CYBER_CLK" 10 MHz HIGH 50 %;
+TIMESPEC "TS_SYSCLK" = PERIOD "SYSCLK" 250 MHz HIGH 50 %;
+TIMESPEC "TS_CLK_125" = PERIOD "CLK_125" TS_SYSCLK/2 HIGH 50 % PRIORITY 100;
+TIMESPEC "TS_TXOUTCLKBUFG" = PERIOD "TXOUTCLKBUFG" 250 MHz HIGH 50 % PRIORITY 100;
+TIMESPEC "TS_CLK_250" = PERIOD "CLK_250" TS_SYSCLK*1 HIGH 50 % PRIORITY 1;
+
+PIN "core*/trn_reset_n_int_i.CLR" TIG;
+PIN "core*/trn_reset_n_i.CLR" TIG;
+PIN "core*/pcie_clocking_i/mmcm_adv_i.RST" TIG;
+
+TIMESPEC "TS_RESETN" = FROM FFS(*) TO FFS(trn_reset_n_i) 8 ns;
+
+##----------------------------- end of file --------------------------------
+
