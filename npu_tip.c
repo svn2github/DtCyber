@@ -943,6 +943,11 @@ void npuTipSendUserBreak(Tcb *tp, u8 bt)
     npuBipRequestUplineCanned(tp->inBuf, mp - tp->inBuf);
 
     /*
+    **  Purge output and send back all acknowledgments.
+    */
+    npuTipDiscardOutputQ(tp);
+
+    /*
     **  Reset input buffer.
     */
     npuTipInputReset(tp);
@@ -950,7 +955,7 @@ void npuTipSendUserBreak(Tcb *tp, u8 bt)
 
 /*--------------------------------------------------------------------------
 **  Purpose:        Discard the pending output queue, but generate required
-**                  achnowledgements.
+**                  acknowledgments.
 **
 **  Parameters:     Name        Description.
 **                  tp          TCB pointer

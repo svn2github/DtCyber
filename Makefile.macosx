@@ -22,20 +22,12 @@
 #
 #--------------------------------------------------------------------------
 
-SDKDIR	= /Developer/SDKs/MacOSX10.4u.sdk
-LIBS    = -lm -lX11 -lpthread -Wl,-syslibroot,$(SDKDIR)
-LDFLAGS = -s -L/usr/X11R6/lib
-INCL    = -I/usr/X11R6/include -isysroot $(SDKDIR)
+LIBS    = -lX11 
+LDFLAGS = -L/usr/X11R6/lib
+INCL    = -I/usr/X11R6/include
 
-G3ARCHFLAGS  = -arch ppc
-G5ARCHFLAGS  = -arch ppc
-X86ARCHFLAGS = -arch i386
 
-G3CFLAGS = -mcpu=G3 -mtune=G3
-G5CFLAGS = -mcpu=G5 -mtune=G5 -falign-loops=16 -falign-functions=16 -falign-labels=16 -mpowerpc64
-X86CFLAGS = -mtune=generic
-
-CFLAGS  = -O3 -std=gnu99 $(INCL) $(ARCHCFLAGS) $(EXTRACFLAGS)
+CFLAGS  = -O3 -std=gnu99 $(INCL) $(EXTRACFLAGS)
 
 HDRS	=   const.h		    \
             cyber_channel_linux.h   \
@@ -85,25 +77,13 @@ OBJS    =   channel.o               \
             window_x11.o            
  
 
-dtcyber:
-	mkdir -p g3; \
-	cd g3; \
-	$(MAKE) -f ../Makefile.macosx gxdtcyber EXTRACFLAGS="$(G3CFLAGS) $(EXTRACFLAGS)" VPATH=.. ARCHCFLAGS="$(G3ARCHFLAGS)" LDFLAGS="$(LDFLAGS) $(G3ARCHFLAGS)"
-	mkdir -p g5; \
-	cd g5; \
-	$(MAKE) -f ../Makefile.macosx gxdtcyber EXTRACFLAGS="$(G5CFLAGS) $(EXTRACFLAGS)" VPATH=..  ARCHCFLAGS="$(G5ARCHFLAGS)" LDFLAGS="$(LDFLAGS) $(G5ARCHFLAGS)"
-	mkdir -p x86; \
-	cd x86 ; \
-	$(MAKE) -f ../Makefile.macosx gxdtcyber EXTRACFLAGS="$(X86CFLAGS) $(EXTRACFLAGS)" VPATH=.. ARCHCFLAGS="$(X86ARCHFLAGS)" LDFLAGS="$(LDFLAGS) $(X86ARCHFLAGS)"
-	lipo -create -output dtcyber g3/gxdtcyber g5/gxdtcyber x86/gxdtcyber
-
-gxdtcyber: $(OBJS)
+dtcyber: $(OBJS)
 	$(CC) $(LDFLAGS) -o $@ $+ $(LIBS)
 
 all: clean dtcyber
 
 clean:
-	rm -rf *.o g3 g5 x86
+	rm -rf *.o
 
 %.o : %.c $(HDRS)
 	$(CC) $(CFLAGS) -c $<

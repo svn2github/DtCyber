@@ -721,6 +721,11 @@ static bool npuSvmProcessTerminalConfig(Tcb *tp, NpuBuffer *bp)
     tp->codeSet = codeSet;
     tp->params.fvTC = termClass;
 
+    /*
+    **  Reset user break 2 status.
+    */
+    tp->breakPending = FALSE;
+
     return(TRUE);
     }
 

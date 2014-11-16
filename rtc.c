@@ -34,8 +34,6 @@
 #include <math.h>
 #if defined(_WIN32)
 #include <windows.h>
-#elif defined(__APPLE__)
-#include <Carbon.h>
 #elif defined(__GNUC__) || defined(__SunOS)
 #include <sys/time.h>
 #include <unistd.h>
@@ -366,7 +364,7 @@ static u64 rtcGetTick(void)
     return(ctr.QuadPart);
     }
 
-#elif defined(__GNUC__) && (defined(__linux__) || defined(__SunOS) || defined (__FreeBSD__))
+#elif defined(__GNUC__) && (defined(__linux__) || defined(__SunOS) || defined (__FreeBSD__) || defined (__APPLE__))
 
 /*--------------------------------------------------------------------------
 **  Purpose:        Low-level microsecond tick functions.
@@ -390,29 +388,6 @@ static u64 rtcGetTick(void)
 
     gettimeofday(&tv, NULL);
     return((u64)tv.tv_sec * (u64)1000000 + (u64)tv.tv_usec);
-    }
-
-#elif defined(__GNUC__) && defined(__APPLE__)
-
-/*--------------------------------------------------------------------------
-**  Purpose:        Low-level microsecond tick functions.
-**
-**  Parameters:     Name        Description.
-**
-**  Returns:        Nothing.
-**
-**------------------------------------------------------------------------*/
-static bool rtcInitTick(void)
-    {
-    Hz = 1000000000;     /* 10^9, because timer is in ns */
-    MHz = 1000.0;
-    printf("Using UpTime() at %f MHz\n", MHz);
-    return(TRUE);
-    }
-
-static u64 rtcGetTick(void)
-    {
-    return(UnsignedWideToUInt64(AbsoluteToNanoseconds(UpTime())));
     }
 
 #else
