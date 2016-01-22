@@ -959,7 +959,7 @@ static void cpuOpIllegal(void)
 
     cpu.regP = 0;
 
-    if ((features & HasNoCejMej) == 0 && !cpu.monitorMode)
+    if ((features & (HasNoCejMej | IsSeries6x00)) == 0 && !cpu.monitorMode)
         {
         /*
         **  Exchange jump to MA.
@@ -1005,7 +1005,7 @@ static bool cpuCheckOpAddress(u32 address, u32 *location)
 
         cpu.regP = 0;
     
-        if ((features & HasNoCejMej) == 0 && !cpu.monitorMode)
+        if ((features & (HasNoCejMej | IsSeries6x00)) == 0 && !cpu.monitorMode)
             {
             /*
             **  Exchange jump to MA.
@@ -1211,7 +1211,7 @@ static bool cpuReadMem(u32 address, CpWord *data)
                 *data = 0;
                 }
 
-            if ((features & HasNoCejMej) == 0 && !cpu.monitorMode)
+            if ((features & (HasNoCejMej | IsSeries6x00)) == 0 && !cpu.monitorMode)
                 {
                 /*
                 **  Exchange jump to MA.
@@ -1285,7 +1285,7 @@ static bool cpuWriteMem(u32 address, CpWord *data)
 
             cpu.regP = 0;
 
-            if ((features & HasNoCejMej) == 0 && !cpu.monitorMode)
+            if ((features & (HasNoCejMej | IsSeries6x00)) == 0 && !cpu.monitorMode)
                 {
                 /*
                 **  Exchange jump to MA.
@@ -1500,7 +1500,7 @@ static void cpuUemWord(bool writeToUem)
 
             cpu.regP = 0;
 
-            if ((features & HasNoCejMej) == 0 && !cpu.monitorMode)
+            if ((features & (HasNoCejMej | IsSeries6x00)) == 0 && !cpu.monitorMode)
                 {
                 /*
                 **  Exchange jump to MA.
@@ -1589,7 +1589,7 @@ static void cpuEcsWord(bool writeToEcs)
 
             cpu.regP = 0;
 
-            if ((features & HasNoCejMej) == 0 && !cpu.monitorMode)
+            if ((features & (HasNoCejMej | IsSeries6x00)) == 0 && !cpu.monitorMode)
                 {
                 /*
                 **  Exchange jump to MA.
@@ -1703,7 +1703,7 @@ static void cpuUemTransfer(bool writeToUem)
 
             cpu.regP = 0;
 
-            if ((features & HasNoCejMej) == 0 && !cpu.monitorMode)
+            if ((features & (HasNoCejMej | IsSeries6x00)) == 0 && !cpu.monitorMode)
                 {
                 /*
                 **  Exchange jump to MA.
@@ -1894,7 +1894,7 @@ static void cpuEcsTransfer(bool writeToEcs)
 
             cpu.regP = 0;
 
-            if ((features & HasNoCejMej) == 0 && !cpu.monitorMode)
+            if ((features & (HasNoCejMej | IsSeries6x00)) == 0 && !cpu.monitorMode)
                 {
                 /*
                 **  Exchange jump to MA.
@@ -2022,7 +2022,7 @@ static bool cpuCmuGetByte(u32 address, u32 pos, u8 *byte)
 
             cpu.regP = 0;
 
-            if ((features & HasNoCejMej) == 0 && !cpu.monitorMode)
+            if ((features & (HasNoCejMej | IsSeries6x00)) == 0 && !cpu.monitorMode)
                 {
                 /*
                 **  Exchange jump to MA.
@@ -2090,7 +2090,7 @@ static bool cpuCmuPutByte(u32 address, u32 pos, u8 byte)
 
             cpu.regP = 0;
 
-            if ((features & HasNoCejMej) == 0 && !cpu.monitorMode)
+            if ((features & (HasNoCejMej | IsSeries6x00)) == 0 && !cpu.monitorMode)
                 {
                 /*
                 **  Exchange jump to MA.
@@ -2191,7 +2191,7 @@ static void cpuCmuMoveIndirect(void)
 
             cpu.regP = 0;
 
-            if ((features & HasNoCejMej) == 0 && !cpu.monitorMode)
+            if ((features & (HasNoCejMej | IsSeries6x00)) == 0 && !cpu.monitorMode)
                 {
                 /*
                 **  Exchange jump to MA.
@@ -2305,7 +2305,7 @@ static void cpuCmuMoveDirect(void)
 
             cpu.regP = 0;
 
-            if ((features & HasNoCejMej) == 0 && !cpu.monitorMode)
+            if ((features & (HasNoCejMej | IsSeries6x00)) == 0 && !cpu.monitorMode)
                 {
                 /*
                 **  Exchange jump to MA.
@@ -2424,7 +2424,7 @@ static void cpuCmuCompareCollated(void)
 
             cpu.regP = 0;
 
-            if ((features & HasNoCejMej) == 0 && !cpu.monitorMode)
+            if ((features & (HasNoCejMej | IsSeries6x00)) == 0 && !cpu.monitorMode)
                 {
                 /*
                 **  Exchange jump to MA.
@@ -2572,7 +2572,7 @@ static void cpuCmuCompareUncollated(void)
 
             cpu.regP = 0;
 
-            if ((features & HasNoCejMej) == 0 && !cpu.monitorMode)
+            if ((features & (HasNoCejMej | IsSeries6x00)) == 0 && !cpu.monitorMode)
                 {
                 /*
                 **  Exchange jump to MA.
@@ -2709,7 +2709,7 @@ static void cpuFloatExceptionHandler(void)
 
             cpu.regP = 0;
 
-            if ((features & HasNoCejMej) == 0 && !cpu.monitorMode)
+            if ((features & (HasNoCejMej | IsSeries6x00)) == 0 && !cpu.monitorMode)
                 {
                 /*
                 **  Exchange jump to MA.
@@ -2735,7 +2735,7 @@ static void cpOp00(void)
     /*
     **  PS or Error Exit to MA.
     */
-    if ((features & HasNoCejMej) != 0)
+    if ((features & (HasNoCejMej | IsSeries6x00)) != 0 || cpu.monitorMode)
         {
         cpuStopped = TRUE;
         }

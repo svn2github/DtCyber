@@ -45,6 +45,7 @@
 #include "const.h"
 #include "types.h"
 #include "proto.h"
+#include "dcc6681.h"
 
 /*
 **  -----------------
@@ -75,10 +76,6 @@
 #define FcPrintEject            00004
 #define FcPrintAutoEject        00005
 #define FcPrintNoSpace          00006
-
-#define Fc6681DevStatusReq      01300
-#define FcControllerOutputEna   01600
-#define Fc6681MasterClear       01700
 
 // Codes for 3152/3256/3659
 #define Fc3152ClearFormat       00010
@@ -551,7 +548,7 @@ static FcStatus lp3000Func(PpWord funcCode)
 #endif
         return(FcProcessed);
 
-    case FcControllerOutputEna:
+    case Fc6681Output:
         if (lc->flags & Lp3555FillImageMem)
             {
             // Tweak the function code to tell I/O handler to toss this data
@@ -788,7 +785,7 @@ static void lp3000Io(void)
     default:
         break;
 
-    case FcControllerOutputEna:
+    case Fc6681Output:
         if (activeChannel->full)
             {
 #if DEBUG
@@ -801,8 +798,8 @@ static void lp3000Io(void)
             if (lc->flags & Lp3000Type501)
                 {
                 // 501 printer, output display code
-                fputc(bcdToAscii[(activeChannel->data >> 6) & 077], fcb);
-                fputc(bcdToAscii[activeChannel->data & 077], fcb);
+                fputc(bcdToAscii[(activeChannel->data >> 6) & Mask6], fcb);
+                fputc(bcdToAscii[activeChannel->data & Mask6], fcb);
                 }
             else
                 {
@@ -815,7 +812,7 @@ static void lp3000Io(void)
             }
         break;
 
-    case FcControllerOutputEna + 1:
+    case Fc6681Output + 1:
         // Fill image memory, just ignore that data
         activeChannel->full = FALSE;
         break;
@@ -855,7 +852,7 @@ static void lp3000Disconnect(void)
     {
     FILE *fcb = active3000Device->fcb[0];
 
-    if (active3000Device->fcode == FcControllerOutputEna)
+    if (active3000Device->fcode == Fc6681Output)
         {
         // Rule is "space after the line is printed" so do that here
         fputc('\n', fcb);
@@ -879,7 +876,6 @@ static void lp3000Disconnect(void)
 static void lp3000DebugData(void)
     {
 #if DEBUG
-    FILE *fcb = active3000Device->fcb[0];
     int i;
 
     if (linePos == 0)
@@ -891,13 +887,14 @@ static void lp3000DebugData(void)
         {
         if (i % 16 == 0)
             {
-            fputc('\n', fcb);
+            fputc('\n', lp3000Log);
             }
 
-        fprintf(fcb, " %04o", lineData[i]);
+//        fprintf(lp3000Log, " %04o", lineData[i]);
+        fprintf(lp3000Log, "%c%c", bcdToAscii[(lineData[i] >> 6) & Mask6], bcdToAscii[(lineData[i] >> 0) & Mask6]);
         }
 
-    fputc('\n', fcb);
+    fputc('\n', lp3000Log);
 
     linePos = 0;
 #endif

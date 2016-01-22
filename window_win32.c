@@ -377,8 +377,8 @@ static BOOL windowCreate(void)
         WS_OVERLAPPEDWINDOW,    // window style
         CW_USEDEFAULT,          // horizontal position of window
         0,                      // vertical position of window
-        CW_USEDEFAULT,          // window width
-        0,                      // window height
+        1280,                   // window width
+        1024,                   // window height
         NULL,                   // handle to parent or owner window
         NULL,                   // menu handle or child identifier
         0,                      // handle to application instance
@@ -405,7 +405,7 @@ static BOOL windowCreate(void)
         return FALSE;
         }
 
-    ShowWindow(hWnd, SW_SHOWMAXIMIZED);
+    ShowWindow(hWnd, SW_SHOW);
     UpdateWindow(hWnd);
 
     SetTimer(hWnd, TIMER_ID, TIMER_RATE, NULL);
@@ -607,6 +607,35 @@ static LRESULT CALLBACK windowProcedure(HWND hWnd, UINT message, WPARAM wParam, 
     /*
     **  Handle input characters.
     */
+#if CcDebug == 1
+    case WM_KEYDOWN:
+        if (GetKeyState(VK_CONTROL) & 0x8000)
+            {
+            switch (wParam)
+                {
+            case '0':
+            case '1':
+            case '2':
+            case '3':
+            case '4':
+            case '5':
+            case '6':
+            case '7':
+            case '8':
+            case '9':
+                dumpRunningPpu((u8)(wParam - '0'));
+                break;
+
+            case 'C':
+            case 'c':
+                dumpRunningCpu();
+                break;
+                }
+            }
+
+        break;
+#endif
+
     case WM_SYSCHAR:
         switch (wParam)
             {
@@ -644,6 +673,11 @@ static LRESULT CALLBACK windowProcedure(HWND hWnd, UINT message, WPARAM wParam, 
                 {
                 traceMask = 0;
                 }
+            break;
+
+        case 'D':
+        case 'd':
+            traceMask ^= TraceCpu | TraceExchange | 2;
             break;
 
         case 'L':

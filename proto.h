@@ -91,11 +91,13 @@ void cpuPpReadMem(u32 address, CpWord *data);
 void cpuPpWriteMem(u32 address, CpWord data);
 
 /*
-**  dcc6681.c
+**  mt362x.c
 */
-DevSlot *dcc6681Attach(u8 channelNo, u8 eqNo, u8 unitNo, u8 devType);
-DevSlot *dcc6681FindDevice(u8 channelNo, u8 equipmentNo, u8 devType);
-void dcc6681Interrupt(bool status);
+void mt362xInit_7(u8 eqNo, u8 unitNo, u8 channelNo, char *deviceName);
+void mt362xInit_9(u8 eqNo, u8 unitNo, u8 channelNo, char *deviceName);
+void mt362xLoadTape(char *params);
+void mt362xUnloadTape(char *params);
+void mt362xShowTapeStatus(void);
 
 /*
 **  mt607.c
@@ -108,6 +110,8 @@ void mt607Init(u8 eqNo, u8 unitNo, u8 channelNo, char *deviceName);
 void mt669Init(u8 eqNo, u8 unitNo, u8 channelNo, char *deviceName);
 void mt669Terminate(DevSlot *dp);
 void mt669LoadTape(char *params);
+void mt669UnloadTape(char *params);
+void mt669ShowTapeStatus(void);
 
 /*
 **  mt679.c
@@ -115,6 +119,8 @@ void mt669LoadTape(char *params);
 void mt679Init(u8 eqNo, u8 unitNo, u8 channelNo, char *deviceName);
 void mt679Terminate(DevSlot *dp);
 void mt679LoadTape(char *params);
+void mt679UnloadTape(char *params);
+void mt679ShowTapeStatus(void);
 
 /*
 **  cr405.c
@@ -242,6 +248,8 @@ void dumpAll(void);
 void dumpCpu(void);
 void dumpPpu(u8 pp);
 void dumpDisassemblePpu(u8 pp);
+void dumpRunningPpu(u8 pp);
+void dumpRunningCpu(void);
 
 /*
 **  float.c

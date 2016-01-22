@@ -37,6 +37,7 @@
 #include "const.h"
 #include "types.h"
 #include "proto.h"
+#include "dcc6681.h"
 
 /*
 **  -----------------
@@ -58,9 +59,6 @@
 #define FcCr3447NoIntEoi         00023
 #define FcCr3447IntError         00024
 #define FcCr3447NoIntError       00025
-#define Fc6681DevStatusReq       01300
-#define Fc6681InputToEor         01400
-#define Fc6681Input              01500
 
 /*
 **      Status reply flags
@@ -188,14 +186,14 @@ void cr3447Init(u8 eqNo, u8 unitNo, u8 channelNo, char *deviceName)
     */
     if (up->context[0] != NULL)
         {
-        fprintf (stderr, "Only one CR3447 unit is possible per equipment\n");
+        fprintf(stderr, "Only one CR3447 unit is possible per equipment\n");
         exit (1);
         }
 
-    cc = calloc (1, sizeof (CrContext));
+    cc = calloc(1, sizeof (CrContext));
     if (cc == NULL)
         {
-        fprintf (stderr, "Failed to allocate CR3447 context block\n");
+        fprintf(stderr, "Failed to allocate CR3447 context block\n");
         exit (1);
         }
 
@@ -207,14 +205,14 @@ void cr3447Init(u8 eqNo, u8 unitNo, u8 channelNo, char *deviceName)
     cc->table = asciiTo026;     // default translation table
     if (deviceName != NULL)
         {
-        if (strcmp (deviceName, "029") == 0)
+        if (strcmp(deviceName, "029") == 0)
             {
             cc->table = asciiTo029;
             }
-        else if (strcmp (deviceName, "026") != 0)
+        else if (strcmp(deviceName, "026") != 0)
             {
-            fprintf (stderr, "Unrecognized card code name %s\n", deviceName);
-            exit (1);
+            fprintf(stderr, "Unrecognized card code name %s\n", deviceName);
+            exit(1);
             }
         }
 

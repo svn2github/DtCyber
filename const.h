@@ -30,7 +30,7 @@
 **  Public Constants
 **  ----------------
 */
-#define DtCyberVersion          "Desktop CYBER 5.3.5"
+#define DtCyberVersion          "Desktop CYBER 5.4.1"
 #define DtCyberCopyright        "Copyright (C) Tom Hunter"
 #define DtCyberLicense          "Licensed under the terms of the GNU General Public License version 3"
 #define DtCyberLicenseDetails	"For details see included text file 'license-gpl-3.0.txt' or visit\n" \
@@ -56,7 +56,7 @@
 /*
 **  Large screen support.
 */
-#define CcLargeWin32Screen      0
+#define CcLargeWin32Screen      1
 
 /*
 **  Debug support
@@ -100,6 +100,7 @@
 #define DtStatusControlRegister 21
 #define DtInterlockRegister     22
 #define DtPciChannel            23
+#define DtMt362x                24
 
 /*
 **  Special channels.
@@ -171,8 +172,8 @@
 /*
 **  Trace masks.
 */
-#define TraceCpu                (1 << 31)
-#define TraceExchange           (1 << 30)
+#define TraceCpu                (1 << 30) 
+#define TraceExchange           (1 << 29)
 
 /*
 **  Sign extension and overflow.

@@ -4,10 +4,11 @@
 **
 **  Copyright (c) 2003-2011, Tom Hunter
 **
-**  Name: const.h
+**  Name: npu.h
 **
 **  Description:
-**      This file defines public constants and macros
+**      This file defines NPU constants, types, variables, macros and
+**      function prototypes.
 **
 **  This program is free software: you can redistribute it and/or modify
 **  it under the terms of the GNU General Public License version 3 as

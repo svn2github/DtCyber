@@ -64,6 +64,7 @@
 **  ---------------------------
 */
 static void waitTerminationMessage(void);
+static void tracePpuCalls(void);
 
 /*
 **  ----------------
@@ -133,7 +134,6 @@ int main(int argc, char **argv)
     */
 #if CcDebug == 1
     traceInit();
-    dumpInit();
 #endif
 
     /*
@@ -172,10 +172,12 @@ int main(int argc, char **argv)
         **  Execute PP, CPU and RTC.
         */
         ppStep();
+
         cpuStep();
         cpuStep();
         cpuStep();
         cpuStep();
+
         channelStep();
         rtcTick();
 
@@ -188,14 +190,8 @@ int main(int argc, char **argv)
     /*
     **  Example post-mortem dumps.
     */
-#if 0
+    dumpInit();
     dumpAll();
-    dumpPpu(0);
-    dumpDisassemblePpu(0);
-    dumpCpu();
-#else
-    dumpAll();
-#endif
 #endif
 
     /*
@@ -225,6 +221,50 @@ int main(int argc, char **argv)
 **
 **--------------------------------------------------------------------------
 */
+
+/*--------------------------------------------------------------------------
+**  Purpose:        Trace SCOPE 3.1 PPU calls (debug only).
+**
+**  Parameters:     Name        Description.
+**
+**  Returns:        Nothing.
+**
+**------------------------------------------------------------------------*/
+static void tracePpuCalls(void)
+    {
+    static u64 ppIrStatus[10] = {0};
+    static u64 l;
+    static u64 r;
+    static FILE *f = NULL;
+
+    int pp;
+
+    if (f == NULL)
+        {
+        f = fopen("ppcalls.txt", "w");
+        if (f == NULL)
+            {
+            return;
+            }
+        }
+    for (pp = 1; pp < 10; pp++)
+        {
+        l = cpMem[050 + (pp * 010)] & ((CpWord)Mask18 << (59 - 18));
+        r = ppIrStatus[pp]          & ((CpWord)Mask18 << (59 - 18));
+        if (l != r)
+            {
+            ppIrStatus[pp] = l;
+            if (l != 0)
+                {
+                l >>= (59 - 17);
+                fprintf(f, "%c", cdcToAscii[(l >> 12) & Mask6]);
+                fprintf(f, "%c", cdcToAscii[(l >>  6) & Mask6]);
+                fprintf(f, "%c", cdcToAscii[(l >>  0) & Mask6]);
+                fprintf(f, "\n");
+                }
+            }
+        }
+    }
 
 /*--------------------------------------------------------------------------
 **  Purpose:        Wait to display shutdown message.

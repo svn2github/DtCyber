@@ -101,7 +101,7 @@ static union
     u8 bytes[4];
     } endianCheck;
 
-static ModelFeatures features6400 = (0);
+static ModelFeatures features6400 = (IsSeries6x00);
 static ModelFeatures featuresCyber73 = (IsSeries70 | HasInterlockReg | HasCMU);
 static ModelFeatures featuresCyber173 =
     (IsSeries170 | HasStatusAndControlReg | HasCMU);

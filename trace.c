@@ -418,6 +418,7 @@ void traceCpu(u32 p, u8 opFm, u8 opI, u8 opJ, u8 opK, u32 opAddress)
     {
     u8 addrMode;
     bool link = TRUE;
+    static bool oneIdle = TRUE;
     DecCpControl *decode = cpDecode;
     static char str[80];
 
@@ -428,6 +429,27 @@ void traceCpu(u32 p, u8 opFm, u8 opI, u8 opJ, u8 opK, u32 opAddress)
         {
         return;
         }
+
+#if 0
+    /*
+    **  Don't trace Scope 3.1 idle loop.
+    */
+    if (cpu.regRaCm == 02020 && cpu.regP == 2)
+        {
+        if (!oneIdle)
+            {
+            return;
+            }
+        else
+            {
+            oneIdle = FALSE;
+            }
+        }
+    else
+        {
+        oneIdle = TRUE;
+        }
+#endif
 
 #if 0
     for (i = 0; i < 8; i++)
@@ -720,7 +742,7 @@ void traceCpu(u32 p, u8 opFm, u8 opI, u8 opJ, u8 opK, u32 opAddress)
 **
 **------------------------------------------------------------------------*/
 void traceExchange(CpuContext *cc, u32 addr, char *title)
-{
+    {
     CpWord data;
     u8 i;
 
@@ -732,7 +754,7 @@ void traceExchange(CpuContext *cc, u32 addr, char *title)
         return;
         }
 
-    fprintf(cpuF, "\nExchange jump with package address %06o (%s)\n\n", addr, title);
+    fprintf(cpuF, "\n%06d Exchange jump with package address %06o (%s)\n\n", traceSequenceNo, addr, title);
     fprintf(cpuF, "P       %06o  ", cc->regP);
     fprintf(cpuF, "A%d %06o  ", 0, cc->regA[0]);
     fprintf(cpuF, "B%d %06o", 0, cc->regB[0]);

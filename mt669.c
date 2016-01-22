@@ -231,6 +231,15 @@ typedef struct ctrlParam
 typedef struct tapeParam
     {
     /*
+    **  Info for show_tape operator command.
+    */
+    struct tapeParam * nextTape;
+    u8          channelNo;
+    u8          eqNo;
+    u8          unitNo;
+    char        fileName[_MAX_PATH + 1];
+
+    /*
     **  Format parameters.
     */
     u8          selectedConversion;
@@ -297,6 +306,8 @@ static char *mt669Func2String(PpWord funcCode);
 **  Private Variables
 **  -----------------
 */
+static TapeParam *firstTape = NULL;
+static TapeParam *lastTape = NULL;
 static u8 rawBuffer[MaxByteBuf];
 
 #if DEBUG
@@ -412,10 +423,25 @@ void mt669Init(u8 eqNo, u8 unitNo, u8 channelNo, char *deviceName)
     dp->context[unitNo] = tp;
 
     /*
+    **  Link into list of tape units.
+    */
+    if (lastTape == NULL)
+        {
+        firstTape = tp;
+        }
+    else
+        {
+        lastTape->nextTape = tp;
+        }
+    
+    lastTape = tp;
+
+    /*
     **  Open TAP container if file name was specified.
     */
     if (deviceName != NULL)
         {
+        strncpy(tp->fileName, deviceName, _MAX_PATH);
         fcb = fopen(deviceName, "rb");
         if (fcb == NULL)
             {
@@ -435,6 +461,13 @@ void mt669Init(u8 eqNo, u8 unitNo, u8 channelNo, char *deviceName)
         }
 
     /*
+    **  Setup show_tape values.
+    */
+    tp->channelNo = channelNo;
+    tp->eqNo = eqNo;
+    tp->unitNo = unitNo;
+
+    /*
     **  All initially mounted tapes are read only.
     */
     tp->ringIn = FALSE;
@@ -442,7 +475,7 @@ void mt669Init(u8 eqNo, u8 unitNo, u8 channelNo, char *deviceName)
     /*
     **  Print a friendly message.
     */
-    printf("MT669 initialised on channel %02o unit %o\n", channelNo, unitNo);
+    printf("MT669 initialised on channel %o equipment %o unit %o\n", channelNo, eqNo, unitNo);
     }
 
 /*--------------------------------------------------------------------------
@@ -546,7 +579,8 @@ void mt669LoadTape(char *params)
     /*
     **  Check if the unit is even configured.
     */
-    if (dp->context[unitNo] == NULL)
+    tp = (TapeParam *)dp->context[unitNo];
+    if (tp == NULL)
         {
         printf("Unit %d not allocated\n", unitNo);
         return;
@@ -589,15 +623,145 @@ void mt669LoadTape(char *params)
         }
 
     /*
+    **  Setup show_tape path name.
+    */
+    strncpy(tp->fileName, str, _MAX_PATH);
+
+    /*
     **  Setup status.
     */
-    tp = (TapeParam *)dp->context[unitNo];
     mt669ResetStatus(tp);
     tp->ringIn = unitMode == 'w';
     tp->blockNo = 0;
     tp->unitReady = TRUE;
 
     printf("Successfully loaded %s\n", str);
+    }
+
+/*--------------------------------------------------------------------------
+**  Purpose:        Unload a mounted tape (operator interface).
+**
+**  Parameters:     Name        Description.
+**                  params      parameters
+**
+**  Returns:        Nothing.
+**
+**------------------------------------------------------------------------*/
+void mt669UnloadTape(char *params)
+    {
+    DevSlot *dp;
+    int numParam;
+    int channelNo;
+    int equipmentNo;
+    int unitNo;
+    TapeParam *tp;
+
+    /*
+    **  Operator inserted a new tape.
+    */
+    numParam = sscanf(params,"%o,%o,%o",&channelNo, &equipmentNo, &unitNo);
+
+    /*
+    **  Check parameters.
+    */
+    if (numParam != 3)
+        {
+        printf("Not enough or invalid parameters\n");
+        return;
+        }
+
+    if (channelNo < 0 || channelNo >= MaxChannels)
+        {
+        printf("Invalid channel no\n");
+        return;
+        }
+
+    if (unitNo < 0 || unitNo >= MaxUnits2)
+        {
+        printf("Invalid unit no\n");
+        return;
+        }
+
+    /*
+    **  Locate the device control block.
+    */
+    dp = channelFindDevice((u8)channelNo, DtMt669);
+    if (dp == NULL)
+        {
+        return;
+        }
+
+    /*
+    **  Check if the unit is even configured.
+    */
+    tp = (TapeParam *)dp->context[unitNo];
+    if (tp == NULL)
+        {
+        printf("Unit %d not allocated\n", unitNo);
+        return;
+        }
+
+    /*
+    **  Check if the unit has been unloaded.
+    */
+    if (dp->fcb[unitNo] == NULL)
+        {
+        printf("Unit %d not loaded\n", unitNo);
+        return;
+        }
+
+    /*
+    **  Close the file.
+    */
+    fclose(dp->fcb[unitNo]);
+    dp->fcb[unitNo] = NULL;
+
+    /*
+    **  Clear show_tape path name.
+    */
+    memset(tp->fileName, '0', _MAX_PATH);
+
+    /*
+    **  Setup status.
+    */
+    mt669ResetStatus(tp);
+    tp->unitReady = FALSE;
+    tp->ringIn = FALSE;
+    tp->rewinding = FALSE;
+    tp->rewindStart = 0;
+    tp->blockCrc = 0;
+    tp->blockNo = 0;
+
+    printf("Successfully unloaded MT669 on channel %o equipment %o unit %o\n", channelNo, equipmentNo, unitNo);
+    }
+
+/*--------------------------------------------------------------------------
+**  Purpose:        Show tape status (operator interface).
+**
+**  Parameters:     Name        Description.
+**                  
+**
+**  Returns:        Nothing.
+**
+**------------------------------------------------------------------------*/
+void mt669ShowTapeStatus(void)
+    {
+    TapeParam *tp = firstTape;
+
+    while (tp)
+        {
+        printf("MT669 on %o,%o,%o", tp->channelNo, tp->eqNo, tp->unitNo);
+        if (tp->unitReady)
+            {
+            printf(",%c,%s\n", tp->ringIn ? 'w' : 'r', tp->fileName);
+            }
+        else
+            {
+            printf("  (idle)\n");
+            }
+
+        tp = tp->nextTape;
+        }
     }
 
 /*

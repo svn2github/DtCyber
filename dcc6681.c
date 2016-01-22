@@ -33,46 +33,13 @@
 #include "const.h"
 #include "types.h"
 #include "proto.h"
+#include "dcc6681.h"
 
 /*
 **  -----------------
 **  Private Constants
 **  -----------------
 */
-
-/*
-**  Function codes.
-*/
-#define Fc6681Select                02000
-#define Fc6681DeSelect              02100
-#define Fc6681ConnectMode2          01000
-#define Fc6681FunctionMode2         01100
-#define Fc6681DccStatusReq          01200
-#define Fc6681DevStatusReq          01300
-#define Fc6681MasterClear           01700
-                                    
-#define Fc6681FunctionMode1         00000
-#define Fc6681Connect4Mode1         04000
-#define Fc6681Connect5Mode1         05000
-#define Fc6681Connect6Mode1         06000
-#define Fc6681Connect7Mode1         07000
-#define Fc6681ConnectEquipmentMask  07000
-#define Fc6681ConnectUnitMask       00777
-#define Fc6681ConnectFuncMask       00777
-                                    
-#define Fc6681InputToEor            01400
-#define Fc6681Input                 01500
-#define Fc6681Output                01600
-#define Fc6681IoModeMask            07700
-#define Fc6681IoIosMask             00070
-#define Fc6681IoBcdMask             00001
-                                    
-/*                                  
-**      Status reply                
-*/                                  
-#define StFc6681Ready               00000
-#define StFc6681Reject              00001
-#define StFc6681IntReject           00003
 
 /*
 **  -----------------------
@@ -319,6 +286,7 @@ static FcStatus dcc6681Func(PpWord funcCode)
     {
     DccControl *mp = (DccControl *)activeDevice->context[0];
     DevSlot *device;
+    PpWord rc;
     i8 u;
     i8 e;
     
@@ -399,6 +367,7 @@ static FcStatus dcc6681Func(PpWord funcCode)
         activeDevice->fcode = funcCode;
         mp->ios = funcCode & Fc6681IoIosMask;
         mp->bcd = funcCode & Fc6681IoBcdMask;
+        mp->status = StFc6681Ready;
         funcCode &= Fc6681IoModeMask;
         return((active3000Device->func)(funcCode));
         }
@@ -434,9 +403,18 @@ static FcStatus dcc6681Func(PpWord funcCode)
 
         active3000Device = mp->device3000[e];
         funcCode &= Fc6681ConnectFuncMask;
-        (active3000Device->func)(funcCode);
         mp->status = StFc6681Ready;
-        return(FcProcessed);
+        rc = (active3000Device->func)(funcCode);
+        if (rc == FcDeclined)
+            {
+            mp->status = StFc6681IntReject;
+            }
+        else
+            {
+            mp->status = StFc6681Ready;
+            }
+
+        return(rc);
         }
 
     mp->status = StFc6681IntReject;
@@ -499,7 +477,16 @@ static void dcc6681Io(void)
         if (activeChannel->full)
             {
             active3000Device = mp->device3000[mp->connectedEquipment];
-            (active3000Device->func) (activeChannel->data);
+            mp->status = StFc6681Ready;
+            if ((active3000Device->func)(activeChannel->data) == FcDeclined)
+                {
+                mp->status = StFc6681IntReject;
+                }
+            else
+                {
+                mp->status = StFc6681Ready;
+                }
+                
             activeChannel->full = FALSE;
             activeDevice->fcode = 0;
             }
@@ -535,7 +522,12 @@ static void dcc6681Io(void)
             */
             activeChannel->data = stat;
             activeChannel->full = TRUE;
+
+            /*
+            **  Clear function code and status.
+            */
             activeDevice->fcode = 0;
+            mp->status = StFc6681Ready;
             }
 
         break;

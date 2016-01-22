@@ -93,6 +93,12 @@ static void opHelpLoadCards(void);
 static void opCmdLoadTape(bool help, char *cmdParams);
 static void opHelpLoadTape(void);
 
+static void opCmdShowTape(bool help, char *cmdParams);
+static void opHelpShowTape(void);
+
+static void opCmdUnloadTape(bool help, char *cmdParams);
+static void opHelpUnloadTape(void);
+
 static void opCmdRemoveCards(bool help, char *cmdParams);
 static void opHelpRemoveCards(void);
 
@@ -124,10 +130,14 @@ static OpCmd decode[] =
     "rc",                       opCmdRemoveCards,
     "rp",                       opCmdRemovePaper,
     "p",                        opCmdPause,
+    "st",                       opCmdShowTape,
+    "ut",                       opCmdUnloadTape,
     "load_cards",               opCmdLoadCards,
     "load_tape",                opCmdLoadTape,
     "remove_cards",             opCmdRemoveCards,
     "remove_paper",             opCmdRemovePaper,
+    "show_tape",                opCmdShowTape,
+    "unload_tape",              opCmdUnloadTape,
     "?",                        opCmdHelp,
     "help",                     opCmdHelp,
     "shutdown",                 opCmdShutdown,
@@ -254,6 +264,7 @@ static void opCreateThread(void)
 **
 **------------------------------------------------------------------------*/
 #if defined(_WIN32)
+#include <conio.h>
 static void opThread(void *param)
 #else
 static void *opThread(void *param)
@@ -275,6 +286,14 @@ static void *opThread(void *param)
     while (emulationActive)
         {
         fflush(stdout);
+
+        #if defined(_WIN32)
+        if (!kbhit())
+            {
+            Sleep(50);
+            continue;
+            }
+        #endif
 
         /*
         **  Wait for command input.
@@ -657,11 +676,94 @@ static void opCmdLoadTape(bool help, char *cmdParams)
 
     mt669LoadTape(cmdParams);
     mt679LoadTape(cmdParams);
+    mt362xLoadTape(cmdParams);
     }
 
 static void opHelpLoadTape(void)
     {
     printf("'load_tape <channel>,<equipment>,<unit>,<r|w>,<filename>' load specified tape.\n");
+    }
+
+/*--------------------------------------------------------------------------
+**  Purpose:        Unload a mounted tape
+**
+**  Parameters:     Name        Description.
+**                  help        Request only help on this command.
+**                  cmdParams   Command parameters
+**
+**  Returns:        Nothing.
+**
+**------------------------------------------------------------------------*/
+static void opCmdUnloadTape(bool help, char *cmdParams)
+    {
+    /*
+    **  Process help request.
+    */
+    if (help)
+        {
+        opHelpUnloadTape();
+        return;
+        }
+
+    /*
+    **  Check parameters and process command.
+    */
+    if (strlen(cmdParams) == 0)
+        {
+        printf("parameters expected\n");
+        opHelpUnloadTape();
+        return;
+        }
+
+    mt669UnloadTape(cmdParams);
+    mt679UnloadTape(cmdParams);
+    mt362xUnloadTape(cmdParams);
+    }
+
+static void opHelpUnloadTape(void)
+    {
+    printf("'unload_tape <channel>,<equipment>,<unit>' unload specified tape unit.\n");
+    }
+
+/*--------------------------------------------------------------------------
+**  Purpose:        Show status of all tape units
+**
+**  Parameters:     Name        Description.
+**                  help        Request only help on this command.
+**                  cmdParams   Command parameters
+**
+**  Returns:        Nothing.
+**
+**------------------------------------------------------------------------*/
+static void opCmdShowTape(bool help, char *cmdParams)
+    {
+    /*
+    **  Process help request.
+    */
+    if (help)
+        {
+        opHelpShowTape();
+        return;
+        }
+
+    /*
+    **  Check parameters and process command.
+    */
+    if (strlen(cmdParams) != 0)
+        {
+        printf("no parameters expected\n");
+        opHelpShowTape();
+        return;
+        }
+
+    mt669ShowTapeStatus();
+    mt679ShowTapeStatus();
+    mt362xShowTapeStatus();
+    }
+
+static void opHelpShowTape(void)
+    {
+    printf("'show_tape' show status of all tape units.\n");
     }
 
 /*--------------------------------------------------------------------------

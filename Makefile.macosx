@@ -22,6 +22,7 @@
 #
 #--------------------------------------------------------------------------
 
+SDKDIR	= /Developer/SDKs/MacOSX10.4u.sdk
 LIBS    = -lX11 
 LDFLAGS = -L/usr/X11R6/lib
 INCL    = -I/usr/X11R6/include
@@ -57,6 +58,7 @@ OBJS    =   channel.o               \
             lp3000.o                \
             main.o                  \
             maintenance_channel.o   \
+            mt362x.o                \
             mt607.o                 \
             mt669.o                 \
             mt679.o                 \
@@ -83,7 +85,7 @@ dtcyber: $(OBJS)
 all: clean dtcyber
 
 clean:
-	rm -rf *.o
+	rm -f *.o
 
 %.o : %.c $(HDRS)
 	$(CC) $(CFLAGS) -c $<

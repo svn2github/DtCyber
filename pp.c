@@ -707,7 +707,7 @@ static void ppOpEXN(void)     // 26
     {
     u32 exchangeAddress;
 
-    if ((opD & 070) == 0 || ((features & HasNoCejMej) != 0 && (opD & 070) <= 030))
+    if ((opD & 070) == 0 || (features & HasNoCejMej) != 0)
         {
         /*
         **  EXN or MXN/MAN with CEJ/MEJ disabled.
@@ -735,13 +735,13 @@ static void ppOpEXN(void)     // 26
             return;
             }
 
-        cpu.monitorMode = TRUE;
-
         if ((opD & 070) == 010)
             {
             /*
             **  MXN.
             */
+            cpu.monitorMode = TRUE;
+
             if ((activePpu->regA & Sign18) != 0 && (features & HasRelocationReg) != 0)
                 {
                 exchangeAddress = activePpu->regR + (activePpu->regA & Mask17);
@@ -755,11 +755,13 @@ static void ppOpEXN(void)     // 26
                 exchangeAddress = activePpu->regA & Mask18;
                 }
             }
-        else if ((opD & 070) == 020 || (opD & 070) == 030)
+        else if ((opD & 070) == 020)
             {
             /*
             **  MAN.
             */
+            cpu.monitorMode = TRUE;
+
             exchangeAddress = cpu.regMa & Mask18;
             }
         else

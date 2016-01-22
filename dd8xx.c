@@ -769,7 +769,7 @@ static FcStatus dd8xxFunc(PpWord funcCode)
         case DiskType885:
             dp->detailedStatus[4] = (dp->cylinder >> 4) & 077;
             dp->detailedStatus[5] = ((dp->cylinder << 8) | dp->track) & 07777;
-            dp->detailedStatus[6] = (dp->sector << 4) | 010;
+            dp->detailedStatus[6] = ((dp->sector << 4) | 010) & 07777;
             if ((dp->track & 1) != 0)
                 {
                 dp->detailedStatus[9] |= 2;  /* odd track */
@@ -784,7 +784,7 @@ static FcStatus dd8xxFunc(PpWord funcCode)
         case DiskType844:
             dp->detailedStatus[4] = ((dp->cylinder & 0777) << 3) | ((dp->track >> 2) & 07);
             dp->detailedStatus[5] = ((dp->track & 03) << 10) | ((dp->sector & 017) << 5) | ((dp->cylinder >> 9) & 01);
-            dp->detailedStatus[6] = (dp->sector << 4) | 010;
+            dp->detailedStatus[6] = ((dp->sector << 4) | 010) & 07777;
             break;
             }
 

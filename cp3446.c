@@ -38,6 +38,7 @@
 #include "const.h"
 #include "types.h"
 #include "proto.h"
+#include "dcc6681.h"
 
 /*
 **  -----------------
@@ -62,9 +63,6 @@
 #define FcCp3446NoIntEoi         00023
 #define FcCp3446IntError         00024
 #define FcCp3446NoIntError       00025
-#define Fc6681DevStatusReq       01300
-#define Fc6681Output             01600
-#define Fc6681MasterClear        01700
 
 /*
 **      Status reply flags

@@ -320,6 +320,10 @@ SOURCE=.\window.rc
 # PROP Default_Filter "*.ini"
 # Begin Source File
 
+SOURCE=..\..\OldCDrive\Cyber\Develop\DtCyber\work\cyber.ini
+# End Source File
+# Begin Source File
+
 SOURCE=.\Makefile.freebsd32
 # End Source File
 # Begin Source File

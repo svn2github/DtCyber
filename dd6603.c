@@ -23,6 +23,8 @@
 **--------------------------------------------------------------------------
 */
 
+#define DEBUG 0
+
 /*
 **  -------------
 **  Include Files
@@ -119,6 +121,7 @@ static void dd6603Io(void);
 static void dd6603Activate(void);
 static void dd6603Disconnect(void);
 static i32 dd6603Seek(i32 track, i32 head, i32 sector);
+static char *dd6603Func2String(PpWord funcCode);
 
 /*
 **  ----------------
@@ -132,6 +135,75 @@ static i32 dd6603Seek(i32 track, i32 head, i32 sector);
 **  -----------------
 */
 static u8 logColumn;
+
+#if DEBUG
+static FILE *dd6603Log = NULL;
+#endif
+
+#if DEBUG
+#define OctalColumn(x) (5 * (x) + 1 + 5)
+#define AsciiColumn(x) (OctalColumn(5) + 2 + (2 * x))
+#define LogLineLength (AsciiColumn(5))
+#endif
+
+#if DEBUG
+static void dd6603LogFlush (void);
+static void dd6603LogByte (int b);
+#endif
+
+#if DEBUG
+static char dd6603LogBuf[LogLineLength + 1];
+static int dd6603LogCol = 0;
+#endif
+
+#if DEBUG
+/*--------------------------------------------------------------------------
+**  Purpose:        Flush incomplete numeric/ascii data line
+**
+**  Parameters:     Name        Description.
+**
+**  Returns:        nothing
+**
+**------------------------------------------------------------------------*/
+static void dd6603LogFlush(void)
+    {
+    if (dd6603LogCol != 0)
+        {
+        fputs(dd6603LogBuf, dd6603Log);
+        }
+
+    dd6603LogCol = 0;
+    memset(dd6603LogBuf, ' ', LogLineLength);
+    dd6603LogBuf[0] = '\n';
+    dd6603LogBuf[LogLineLength] = '\0';
+    }
+
+/*--------------------------------------------------------------------------
+**  Purpose:        Log a byte in octal/ascii form
+**
+**  Parameters:     Name        Description.
+**
+**  Returns:        nothing
+**
+**------------------------------------------------------------------------*/
+static void dd6603LogByte(int b)
+    {
+    char octal[10];
+    int col;
+    
+    col = OctalColumn(dd6603LogCol);
+    sprintf(octal, "%04o ", b);
+    memcpy(dd6603LogBuf + col, octal, 5);
+
+    col = AsciiColumn(dd6603LogCol);
+    dd6603LogBuf[col + 0] = cdcToAscii[(b >> 6) & Mask6];
+    dd6603LogBuf[col + 1] = cdcToAscii[(b >> 0) & Mask6];
+    if (++dd6603LogCol == 5)
+        {
+        dd6603LogFlush();
+        }
+    }
+#endif
 
 /*
 **--------------------------------------------------------------------------
@@ -162,6 +234,13 @@ void dd6603Init(u8 eqNo, u8 unitNo, u8 channelNo, char *deviceName)
     (void)eqNo;
     (void)unitNo;
     (void)deviceName;
+
+#if DEBUG
+    if (dd6603Log == NULL)
+        {
+        dd6603Log = fopen("dd6603log.txt", "wt");
+        }
+#endif
 
     dp = channelAttach(channelNo, eqNo, DtDd6603);
 
@@ -213,6 +292,16 @@ static FcStatus dd6603Func(PpWord funcCode)
     DiskParam *dp = (DiskParam *)activeDevice->context[activeDevice->selectedUnit];
     i32 pos;
 
+#if DEBUG
+    dd6603LogFlush();
+    fprintf(dd6603Log, "\n%06d PP:%02o CH:%02o f:%04o T:%-25s  >   ",
+        traceSequenceNo,
+        activePpu->id,
+        activeDevice->channel->id,
+        funcCode,
+        dd6603Func2String(funcCode));
+#endif
+
     switch (funcCode & Fc6603CodeMask)
         {
     default:
@@ -244,6 +333,7 @@ static FcStatus dd6603Func(PpWord funcCode)
 
     case Fc6603SelectTrack:
         dp->track = funcCode & Fc6603TrackMask;
+        return(FcProcessed);
         break;
 
     case Fc6603SelectHead:
@@ -263,6 +353,7 @@ static FcStatus dd6603Func(PpWord funcCode)
             **  Select head.
             */
             dp->head = funcCode & Fc6603HeadMask;
+            return(FcProcessed);
             }
         break;
         }
@@ -281,6 +372,7 @@ static FcStatus dd6603Func(PpWord funcCode)
 static void dd6603Io(void)
     {
     FILE *fcb = activeDevice->fcb[activeDevice->selectedUnit];
+    DiskParam *dp = (DiskParam *)activeDevice->context[activeDevice->selectedUnit];
 
     switch (activeDevice->fcode & Fc6603CodeMask)
         {
@@ -288,11 +380,18 @@ static void dd6603Io(void)
         logError(LogErrorLocation, "channel %02o - invalid function code: %4.4o", activeChannel->id, (u32)activeDevice->fcode);
         break;
 
+    case 0:
+        break;
+
     case Fc6603ReadSector:
         if (!activeChannel->full)
             {
             fread(&activeChannel->data, 2, 1, fcb);
             activeChannel->full = TRUE;
+
+#if DEBUG
+            dd6603LogByte(activeChannel->data);
+#endif
             }
         break;
 
@@ -301,6 +400,10 @@ static void dd6603Io(void)
             {
             fwrite(&activeChannel->data, 2, 1, fcb);
             activeChannel->full = FALSE;
+
+#if DEBUG
+            dd6603LogByte(activeChannel->data);
+#endif
             }
         break;
 
@@ -312,8 +415,18 @@ static void dd6603Io(void)
             {
             activeChannel->data = activeChannel->status;
             activeChannel->full = TRUE;
+
+#if 0
+            activeChannel->status = (u16)dp->sector;
+
+            /*
+            **  Simulate the moving disk - seems strange but is required.
+            */
+            dp->sector = (dp->sector + 1) & 0177;
+#else
             activeChannel->status = 0;
             activeDevice->fcode = 0;
+#endif
             }
         break;
         }
@@ -384,6 +497,32 @@ static i32 dd6603Seek(i32 track, i32 head, i32 sector)
     result *= SectorSize * 2;
 
     return(result);
+    }
+
+/*--------------------------------------------------------------------------
+**  Purpose:        Convert function code to string.
+**
+**  Parameters:     Name        Description.
+**                  funcCode    function code
+**
+**  Returns:        String equivalent of function code.
+**
+**------------------------------------------------------------------------*/
+static char *dd6603Func2String(PpWord funcCode)
+    {
+    static char buf[30];
+#if DEBUG
+    switch(funcCode & Fc6603CodeMask)
+        {
+    case Fc6603ReadSector             : return "Fc6603ReadSector";
+    case Fc6603WriteSector            : return "Fc6603WriteSector";
+    case Fc6603SelectTrack            : return "Fc6603SelectTrack";
+    case Fc6603SelectHead             : return "Fc6603SelectHead";
+    case Fc6603StatusReq              : return "Fc6603StatusReq";
+        }
+#endif
+    sprintf(buf, "UNKNOWN: %04o", funcCode);
+    return(buf);
     }
 
 /*---------------------------  End Of File  ------------------------------*/

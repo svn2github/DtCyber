@@ -72,7 +72,7 @@
 **  -----------------
 */
 static FILE *cpuF;
-static FILE **ppuF;
+static FILE *ppuF[024];
 
 /*
 **--------------------------------------------------------------------------
@@ -94,13 +94,6 @@ void dumpInit(void)
     {
     u8 pp;
     char ppDumpName[20];
-
-    ppuF = calloc(ppuCount, sizeof(FILE *));
-    if (ppuF == NULL)
-        {
-        fprintf(stderr, "Failed to allocate ppu dump file handles\n");
-        exit(1);
-        }
 
     cpuF = fopen("cpu.dmp", "wt");
     if (cpuF == NULL)
@@ -143,8 +136,6 @@ void dumpTerminate(void)
             fclose(ppuF[pp]);
             }
         }
-
-    free(ppuF);
     }
 
 /*--------------------------------------------------------------------------
@@ -293,7 +284,7 @@ void dumpCpu(void)
     }
 
 /*--------------------------------------------------------------------------
-**  Purpose:        Dump CPU.
+**  Purpose:        Dump PPU.
 **
 **  Parameters:     Name        Description.
 **                  pp          PPU number.
@@ -396,6 +387,59 @@ void dumpDisassemblePpu(u8 pp)
 
         fprintf(pf, "\n");
         }
+    }
+
+/*--------------------------------------------------------------------------
+**  Purpose:        Dump running PPU.
+**
+**  Parameters:     Name        Description.
+**                  pp          PPU number.
+**
+**  Returns:        Nothing.
+**
+**------------------------------------------------------------------------*/
+void dumpRunningPpu(u8 pp)
+    {
+    FILE *pf;
+    char ppDumpName[20];
+
+    sprintf(ppDumpName, "ppu%02o_run.dmp", pp);
+    pf = fopen(ppDumpName, "wt");
+    if (pf == NULL)
+        {
+        logError(LogErrorLocation, "can't open %s", ppDumpName);
+        return;
+        }
+
+    ppuF[pp] = pf;
+
+    dumpPpu(pp);
+    fclose(pf);
+
+    ppuF[pp] = NULL;
+    }
+
+/*--------------------------------------------------------------------------
+**  Purpose:        Dump running CPU.
+**
+**  Parameters:     Name        Description.
+**
+**  Returns:        Nothing.
+**
+**------------------------------------------------------------------------*/
+void dumpRunningCpu(void)
+    {
+    cpuF = fopen("cpu_run.dmp", "wt");
+    if (cpuF == NULL)
+        {
+        logError(LogErrorLocation, "can't open cpu_run.dmp");
+        return;
+        }
+
+    dumpCpu();
+    fclose(cpuF);
+
+    cpuF = NULL;
     }
 
 /*---------------------------  End Of File  ------------------------------*/

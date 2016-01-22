@@ -69,6 +69,8 @@ DevDesc deviceDesc[] =
     "MT607",    mt607Init,
     "MT669",    mt669Init,
     "MT679",    mt679Init,
+    "MT362x-7", mt362xInit_7,
+    "MT362x-9", mt362xInit_9,
     "DD6603",   dd6603Init,
     "DD844-2",  dd844Init_2,
     "DD844-4",  dd844Init_4,
