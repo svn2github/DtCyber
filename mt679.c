@@ -131,7 +131,7 @@
 #define MaxPpBuf                40000
 #define MaxByteBuf              60000
 #define MaxPackedConvBuf        (((256 * 8) + 11) / 12)
-#define MaxTapeSize             1250000000   // this may need adjusting for shorter real tapes
+#define MaxTapeSize             125000000   // this may need adjusting for shorter real tapes
 
 
 /*
@@ -162,6 +162,7 @@ typedef struct ctrlParam
     u8          minBlockLength;
     bool        lwrMode;
     bool        writing;
+    bool        oddFrameCount;
 
     PpWord      controllerStatus[17];   // first element not used
     } CtrlParam;
@@ -1391,6 +1392,7 @@ static FcStatus mt679Func(PpWord funcCode)
             tp->bp = tp->ioBuffer;
             activeDevice->recordLength = 0;
             cp->writing = TRUE;
+            cp->oddFrameCount = funcCode == Fc679WriteShort;
             if (!cp->lwrMode)
                 {
                 tp->blockNo += 1;
@@ -1867,7 +1869,6 @@ static void mt679FlushWrite(void)
     PpWord *ip;
     u8 *rp;
     u8 *writeConv;
-    bool oddFrameCount;
 
     unitNo = activeDevice->selectedUnit;
     tp = (TapeParam *)activeDevice->context[unitNo];
@@ -1881,6 +1882,7 @@ static void mt679FlushWrite(void)
         {
         cp->lwrMode = FALSE;
         cp->writing = FALSE;
+        cp->oddFrameCount = FALSE;
         return;
         }
 
@@ -1890,7 +1892,6 @@ static void mt679FlushWrite(void)
     recLen2 = activeDevice->recordLength;
     ip = tp->ioBuffer;
     rp = rawBuffer;
-    oddFrameCount = activeDevice->fcode == Fc679WriteShort;
 
     switch (cp->selectedConversion)
         {
@@ -1912,7 +1913,7 @@ static void mt679FlushWrite(void)
             {
             recLen0 -= 2;
             }
-        else if (oddFrameCount)
+        else if (cp->oddFrameCount)
             {
             recLen0 -= 1;
             }
@@ -1935,7 +1936,7 @@ static void mt679FlushWrite(void)
              }
 
         recLen0 = rp - rawBuffer;
-        if (oddFrameCount)
+        if (cp->oddFrameCount)
             {
             recLen0 -= 1;
             }
@@ -1975,6 +1976,7 @@ static void mt679FlushWrite(void)
     **  Writing completed.
     */
     cp->writing = FALSE;
+    cp->oddFrameCount = FALSE;
     }
 
 /*--------------------------------------------------------------------------

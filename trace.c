@@ -344,19 +344,21 @@ void traceInit(void)
     devF = fopen("device.trc", "wt");
     if (devF == NULL)
         {
-        logError(LogErrorLocation, "can't open dev trace");
+        fprintf(stderr, "can't open device.trc - aborting\n");
+        exit(1);
         }
 
     cpuF = fopen("cpu.trc", "wt");
     if (cpuF == NULL)
         {
-        logError(LogErrorLocation, "can't open cpu trace");
+        fprintf(stderr, "can't open cpu.trc - aborting\n");
+        exit(1);
         }
 
     ppuF = calloc(ppuCount, sizeof(FILE *));
     if (ppuF == NULL)
         {
-        fprintf(stderr, "Failed to allocate PP trace FILE pointers\n");
+        fprintf(stderr, "Failed to allocate PP trace FILE pointers - aborting\n");
         exit(1);
         }
 
@@ -366,7 +368,8 @@ void traceInit(void)
         ppuF[pp] = fopen(ppTraceName, "wt");
         if (ppuF[pp] == NULL)
             {
-            logError(LogErrorLocation, "can't open ppu[%02o] trace (%s)\n", pp, ppTraceName);
+            fprintf(stderr, "Can't open ppu[%02o] trace (%s) - aborting\n", pp, ppTraceName);
+            exit(1);
             }
         }
 
