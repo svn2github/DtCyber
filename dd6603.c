@@ -2,7 +2,7 @@
 **
 **  Copyright (c) 2003-2011, Tom Hunter
 **
-**  Name: disk.c
+**  Name: dd6603.c
 **
 **  Description:
 **      Perform emulation of CDC 6603 disk drives.

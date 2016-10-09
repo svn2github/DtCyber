@@ -26,15 +26,15 @@ SDKDIR	= /Developer/SDKs/MacOSX10.4u.sdk
 LIBS    = -lX11 
 LDFLAGS = -L/usr/X11R6/lib
 INCL    = -I/usr/X11R6/include
-
+EXTRACFLAGS = -Wno-switch -Wno-format-security
 
 CFLAGS  = -O3 -std=gnu99 $(INCL) $(EXTRACFLAGS)
 
 HDRS	=   const.h		    \
             cyber_channel_linux.h   \
-	    npu.h		    \
-	    proto.h		    \
-	    types.h
+            npu.h		    \
+            proto.h		    \
+            types.h
 
 OBJS    =   channel.o               \
             charset.o               \

@@ -256,6 +256,71 @@ static DiskSize sizeDd885_1 = {MaxCylinders885_1, MaxTracks885, MaxSectors885};
 static FILE *dd8xxLog = NULL;
 #endif
 
+#if DEBUG
+#define OctalColumn(x) (5 * (x) + 1 + 5)
+#define AsciiColumn(x) (OctalColumn(5) + 2 + (2 * x))
+#define LogLineLength (AsciiColumn(5))
+#endif
+
+#if DEBUG
+static void dd8xxLogFlush (void);
+static void dd8xxLogByte (int b);
+#endif
+
+#if DEBUG
+static char dd8xxLogBuf[LogLineLength + 1];
+static int dd8xxLogCol = 0;
+#endif
+
+#if DEBUG
+/*--------------------------------------------------------------------------
+**  Purpose:        Flush incomplete numeric/ascii data line
+**
+**  Parameters:     Name        Description.
+**
+**  Returns:        nothing
+**
+**------------------------------------------------------------------------*/
+static void dd8xxLogFlush(void)
+    {
+    if (dd8xxLogCol != 0)
+        {
+        fputs(dd8xxLogBuf, dd8xxLog);
+        }
+
+    dd8xxLogCol = 0;
+    memset(dd8xxLogBuf, ' ', LogLineLength);
+    dd8xxLogBuf[0] = '\n';
+    dd8xxLogBuf[LogLineLength] = '\0';
+    }
+
+/*--------------------------------------------------------------------------
+**  Purpose:        Log a byte in octal/ascii form
+**
+**  Parameters:     Name        Description.
+**
+**  Returns:        nothing
+**
+**------------------------------------------------------------------------*/
+static void dd8xxLogByte(int b)
+    {
+    char octal[10];
+    int col;
+    
+    col = OctalColumn(dd8xxLogCol);
+    sprintf(octal, "%04o ", b);
+    memcpy(dd8xxLogBuf + col, octal, 5);
+
+    col = AsciiColumn(dd8xxLogCol);
+    dd8xxLogBuf[col + 0] = cdcToAscii[(b >> 6) & Mask6];
+    dd8xxLogBuf[col + 1] = cdcToAscii[(b >> 0) & Mask6];
+    if (++dd8xxLogCol == 5)
+        {
+        dd8xxLogFlush();
+        }
+    }
+#endif
+
 /*
 **--------------------------------------------------------------------------
 **
@@ -331,6 +396,11 @@ static void dd8xxInit(u8 eqNo, u8 unitNo, u8 channelNo, char *deviceName, DiskSi
     if (dd8xxLog == NULL)
         {
         dd8xxLog = fopen("dd8xxlog.txt", "wt");
+        if (dd8xxLog == NULL)
+            {
+            fprintf(stderr, "dd8xxlog.txt - aborting\n");
+            exit(1);
+            }
         }
 #endif
 
@@ -644,6 +714,7 @@ static FcStatus dd8xxFunc(PpWord funcCode)
         }
 
 #if DEBUG
+    dd8xxLogFlush();
     if (dp != NULL)
         {
         fprintf(dd8xxLog, "\n%06d PP:%02o CH:%02o DSK:%d f:%04o T:%-25s   c:%3d t:%2d s:%2d  >   ", 
@@ -1063,6 +1134,9 @@ static void dd8xxIo(void)
             {
             activeChannel->data = dp->read(dp, fcb);
             activeChannel->full = TRUE;
+#if DEBUG
+            dd8xxLogByte(activeChannel->data);
+#endif
 
             if (--activeDevice->recordLength == 0)
                 {
@@ -1089,6 +1163,9 @@ static void dd8xxIo(void)
             dp->write(dp, fcb, activeChannel->data);
             activeChannel->full = FALSE;
 
+#if DEBUG
+            dd8xxLogByte(activeChannel->data);
+#endif
             if (--activeDevice->recordLength == 0)
                 {
                 pos = dd8xxSeekNextSector(dp);

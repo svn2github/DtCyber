@@ -111,9 +111,6 @@
 #define MaxPpBuf                40000
 #define MaxByteBuf              60000
 #define MaxTapeSize             1250000000   // this may need adjusting for shorter real tapes
-#ifndef _MAX_PATH
-#define _MAX_PATH                256
-#endif
 
 /*
 **  -----------------------

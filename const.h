@@ -56,7 +56,7 @@
 /*
 **  Large screen support.
 */
-#define CcLargeWin32Screen      1
+#define CcLargeWin32Screen      0
 
 /*
 **  Debug support
@@ -130,6 +130,10 @@
 #define FontMedium              16
 #define FontSmall               8
 #define FontDot                 0
+
+#ifndef _MAX_PATH
+#define _MAX_PATH                256
+#endif
 
 #if CcLargeWin32Screen == 1
 #define OffLeftScreen           010
