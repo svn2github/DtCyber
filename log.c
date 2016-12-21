@@ -118,7 +118,7 @@ void logError(char *file, int line, char *fmt, ...)
     fprintf(logF, "[%s:%d] ", file, line); 
     vfprintf(logF, fmt, param);
     va_end(param);
-    fprintf(logF, NEWLINE);
+    fprintf(logF, "\n");
     fflush(logF);
     }
 

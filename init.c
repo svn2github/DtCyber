@@ -37,6 +37,7 @@
 #include "const.h"
 #include "types.h"
 #include "proto.h"
+#include "npu.h"
 
 /*
 **  -----------------
@@ -64,6 +65,7 @@
 **  ---------------------------
 */
 static void initCyber(char *config);
+static void initNpuConnections(void);
 static void initEquipment(void);
 static void initDeadstart(void);
 static bool initOpenSection(char *name);
@@ -92,8 +94,9 @@ char persistDir[256];
 static FILE *fcb;
 static long sectionStart;
 static char *startupFile = "cyber.ini";
-static char deadstart[40];
-static char equipment[40];
+static char deadstart[80];
+static char equipment[80];
+static char npuConnections[80];
 static long chCount;
 static union
     {
@@ -161,6 +164,7 @@ void initStartup(char *config)
 
     initCyber(config);
     initDeadstart();
+    initNpuConnections();
     initEquipment();
 
     if ((features & HasMaintenanceChannel) != 0)
@@ -460,6 +464,11 @@ static void initCyber(char *config)
         }
 
     /*
+    **  Get optional NPU port definition section name.
+    */
+    initGetString("npuConnections", "", npuConnections, sizeof(npuConnections));
+
+    /*
     **  Get active equipment section name.
     */
     if (!initGetString("equipment", "", equipment, sizeof(equipment)))
@@ -490,6 +499,140 @@ static void initCyber(char *config)
     }
 
 /*--------------------------------------------------------------------------
+**  Purpose:        Read and process NPU port definitions.
+**
+**  Parameters:     Name        Description.
+**
+**  Returns:        Nothing.
+**
+**------------------------------------------------------------------------*/
+static void initNpuConnections(void)
+    {
+    char *line;
+    char *token;
+    int tcpPort;
+    int numConns;
+    u8 connType;
+    int lineNo;
+    int rc;
+
+    if (strlen(npuConnections) == 0)
+        {
+        /*
+        **  Default is the classic port 6610, 10 connections and raw TCP connection.
+        */
+        npuNetRegister(6610, 10, ConnTypeRaw);
+        return;
+        }
+
+    if (!initOpenSection(npuConnections))
+        {
+        fprintf(stderr, "Required section [%s] not found in %s\n", npuConnections, startupFile);
+        exit(1);
+        }
+
+    /*
+    **  Process all equipment entries.
+    */
+    lineNo = -1;
+    while  ((line = initGetNextLine()) != NULL)
+        {
+        lineNo += 1;
+
+        /*
+        **  Parse TCP port number
+        */
+        token = strtok(line, ",");
+        if (token == NULL || !isdigit(token[0]))
+            {
+            fprintf(stderr, "Section [%s], relative line %d, invalid TCP port number %s in %s\n",
+                npuConnections, lineNo, token == NULL ? "NULL" : token, startupFile);
+            exit(1);
+            }
+
+        tcpPort = strtol(token, NULL, 10);
+        if (tcpPort < 1000 || tcpPort > 65535)
+            {
+            fprintf(stderr, "Section [%s], relative line %d, out of range TCP port number %s in %s\n",
+                npuConnections, lineNo, token == NULL ? "NULL" : token, startupFile);
+            fprintf(stderr, "TCP port numbers must be between 1000 and 65535\n");
+            exit(1);
+            }
+
+        /*
+        **  Parse number of connections on this port.
+        */
+        token = strtok(NULL, ",");
+        if (token == NULL || !isdigit(token[0]))
+            {
+            fprintf(stderr, "Section [%s], relative line %d, invalid number of connections %s in %s\n",
+                npuConnections, lineNo, token == NULL ? "NULL" : token, startupFile);
+            exit(1);
+            }
+
+        numConns = strtol(token, NULL, 10);
+        if (numConns < 0 || numConns > 100)
+            {
+            fprintf(stderr, "Section [%s], relative line %d, out of range number of connections %s in %s\n",
+                npuConnections, lineNo, token == NULL ? "NULL" : token, startupFile);
+            fprintf(stderr, "Connection count must be between 0 and 100\n");
+            exit(1);
+            }
+
+        /*
+        **  Parse NPU connection type.
+        */
+        token = strtok(NULL, " ");
+        if (token == NULL)
+            {
+            fprintf(stderr, "Section [%s], relative line %d, invalid NPU connection type %s in %s\n",
+                npuConnections, lineNo, token == NULL ? "NULL" : token, startupFile);
+            exit(1);
+            }
+
+        if (strcmp(token, "raw") == 0)
+            {
+            connType = ConnTypeRaw;
+            }
+        else if (strcmp(token, "pterm") == 0)
+            {
+            connType = ConnTypePterm;
+            }
+        else if (strcmp(token, "rs232") == 0)
+            {
+            connType = ConnTypeRs232;
+            }
+        else
+            {
+            fprintf(stderr, "Section [%s], relative line %d, unknown NPU connection type %s in %s\n",
+                npuConnections, lineNo, token == NULL ? "NULL" : token, startupFile);
+            fprintf(stderr, "NPU connection types must be 'raw' or 'pterm' or 'rs232'\n");
+            exit(1);
+            }
+
+        /*
+        **  Setup NPU connection type.
+        */
+        rc = npuNetRegister(tcpPort, numConns, connType);
+        switch (rc)
+            {
+        case NpuNetRegOk:
+            break;
+
+        case NpuNetRegOvfl:
+            fprintf(stderr, "Section [%s], relative line %d, too many connection types (max of %d) in %s\n",
+                npuConnections, lineNo, MaxConnTypes, startupFile);
+            exit(1);
+
+        case NpuNetRegDupl:
+            fprintf(stderr, "Section [%s], relative line %d, duplicate TCP port %d for connection type in %s\n",
+                npuConnections, lineNo, tcpPort, startupFile);
+            exit(1);
+            }
+        }
+    }
+
+/*--------------------------------------------------------------------------
 **  Purpose:        Read and process equipment definitions.
 **
 **  Parameters:     Name        Description.
@@ -507,7 +650,6 @@ static void initEquipment(void)
     int channelNo;
     u8 deviceIndex;
     int lineNo;
-
 
     if (!initOpenSection(equipment))
         {
@@ -530,7 +672,7 @@ static void initEquipment(void)
         if (token == NULL || strlen(token) < 2)
             {
             fprintf(stderr, "Section [%s], relative line %d, invalid device type %s in %s\n",
-                equipment, lineNo, token, startupFile);
+                equipment, lineNo, token == NULL ? "NULL" : token, startupFile);
             exit(1);
             }
 
@@ -545,7 +687,7 @@ static void initEquipment(void)
         if (deviceIndex == deviceCount)
             {
             fprintf(stderr, "Section [%s], relative line %d, unknown device %s in %s\n",
-                equipment, lineNo, token, startupFile);
+                equipment, lineNo, token == NULL ? "NULL" : token, startupFile);
             exit(1);
             }
 
@@ -556,7 +698,7 @@ static void initEquipment(void)
         if (token == NULL || strlen(token) != 1 || !isoctal(token[0]))
             {
             fprintf(stderr, "Section [%s], relative line %d, invalid equipment no %s in %s\n",
-                equipment, lineNo, token, startupFile);
+                equipment, lineNo, token == NULL ? "NULL" : token, startupFile);
             exit(1);
             }
 
@@ -569,7 +711,7 @@ static void initEquipment(void)
         if (token == NULL || !isoctal(token[0]))
             {
             fprintf(stderr, "Section [%s], relative line %d, invalid unit count %s in %s\n",
-                equipment, lineNo, token, startupFile);
+                equipment, lineNo, token == NULL ? "NULL" : token, startupFile);
             exit(1);
             }
 
@@ -582,7 +724,7 @@ static void initEquipment(void)
         if (token == NULL || strlen(token) != 2 || !isoctal(token[0]) || !isoctal(token[1]))
             {
             fprintf(stderr, "Section [%s], relative line %d, invalid channel no %s in %s\n",
-                equipment, lineNo, token, startupFile);
+                equipment, lineNo, token == NULL ? "NULL" : token, startupFile);
             exit(1);
             }
 
@@ -591,7 +733,7 @@ static void initEquipment(void)
         if (channelNo < 0 || channelNo >= chCount)
             {
             fprintf(stderr, "Section [%s], relative line %d, channel no %s not permitted in %s\n",
-                equipment, lineNo, token, startupFile);
+                equipment, lineNo, token == NULL ? "NULL" : token, startupFile);
             exit(1);
             }
 
@@ -643,7 +785,7 @@ static void initDeadstart(void)
             || !isoctal(token[2]) || !isoctal(token[3]))
             {
             fprintf(stderr, "Section [%s], relative line %d, invalid deadstart setting %s in %s\n",
-                deadstart, lineNo, token, startupFile);
+                deadstart, lineNo, token == NULL ? "NULL" : token, startupFile);
             exit(1);
             }
 

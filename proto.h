@@ -338,7 +338,7 @@ extern ModelFeatures features;
 extern ModelType modelType;
 extern char persistDir[];
 extern u16 npuNetTelnetPort;
-extern u16 npuNetTelnetConns;
+extern u16 npuNetTcpConns;
 
 #endif /* PROTO_H */
 /*---------------------------  End Of File  ------------------------------*/

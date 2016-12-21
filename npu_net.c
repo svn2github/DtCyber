@@ -71,6 +71,17 @@
 */
 
 /*
+**  Registered NPU connection types.
+*/
+typedef struct npuConnType
+    {
+    u16                 tcpPort;
+    int                 numConns;
+    u8                  connType;
+    Tcb                 *startTcb;
+    } NpuConnType;
+
+/*
 **  ---------------------------
 **  Private Function Prototypes
 **  ---------------------------
@@ -81,6 +92,7 @@ static void npuNetThread(void *param);
 #else
 static void *npuNetThread(void *param);
 #endif
+static void npuNetProcessNewConnection(int acceptFd, NpuConnType *ct);
 static void npuNetQueueOutput(Tcb *tp, u8 *data, int len);
 static void npuNetTryOutput(Tcb *tp);
 
@@ -89,14 +101,14 @@ static void npuNetTryOutput(Tcb *tp);
 **  Public Variables
 **  ----------------
 */
-u16 npuNetTelnetPort = 6610;
-u16 npuNetTelnetConns = 10;
+u16 npuNetTcpConns = 0;
 
 /*
 **  -----------------
 **  Private Variables
 **  -----------------
 */
+
 static char connectingMsg[] = "\r\nConnecting to host - please wait ...\r\n";
 static char connectedMsg[] = "\r\nConnected\r\n\n";
 static char abortMsg[] = "\r\nConnection aborted\r\n";
@@ -104,8 +116,8 @@ static char networkDownMsg[] = "Network going down - connection aborted\r\n";
 static char notReadyMsg[] = "\r\nHost not ready to accept connections - please try again later.\r\n";
 static char noPortsAvailMsg[] = "\r\nNo free ports available - please try again later.\r\n";
 
-static fd_set readFds;
-static fd_set writeFds;
+static NpuConnType connTypes[MaxConnTypes];
+static int numConnTypes = 0;
 
 static int pollIndex = 0;
 
@@ -118,6 +130,54 @@ static int pollIndex = 0;
 */
 
 /*--------------------------------------------------------------------------
+**  Purpose:        Register connection type
+**
+**  Parameters:     Name        Description.
+**                  tcpPort     TCP port number
+**                  numConns    Number of connections on this TCP port
+**                  connType    Connection type (raw/pterm/rs232)
+**
+**  Returns:        NpuNetRegOk: successfully registered
+**                  NpuNetRegOvfl: too many connection types
+**                  NpuNetRegDupl: duplicate TCP port specified
+**
+**------------------------------------------------------------------------*/
+int npuNetRegister(int tcpPort, int numConns, int connType)
+    {
+    int i;
+
+    /*
+    ** Check for too many registrations.
+    */
+    if (numConnTypes >= MaxConnTypes)
+        {
+        return(NpuNetRegOvfl);
+        }
+
+    /*
+    **  Check for duplicate TCP ports.
+    */
+    for (i = 0; i < numConnTypes; i++)
+        {
+        if (connTypes[i].tcpPort == tcpPort)
+            {
+            return(NpuNetRegDupl);
+            }
+        }
+
+    /*
+    **  Register this port.
+    */
+    connTypes[numConnTypes].tcpPort = tcpPort;
+    connTypes[numConnTypes].numConns = numConns;
+    connTypes[numConnTypes].connType = connType;
+    numConnTypes += 1;
+    npuNetTcpConns += numConns;
+
+    return(NpuNetRegOk);
+    }
+
+/*--------------------------------------------------------------------------
 **  Purpose:        Initialise network connection handler.
 **
 **  Parameters:     Name        Description.
@@ -128,21 +188,41 @@ static int pollIndex = 0;
 void npuNetInit(void)
     {
     int i;
-    Tcb *tp = npuTcbs;
+    int j;
+    int numConns;
+    u8 connType;
+    Tcb *tp;
 
     /*
     **  Initialise network part of TCBs.
     */
-    for (i = 0; i < npuNetTelnetConns; i++, tp++)
+    tp = npuTcbs;
+    for (i = 0; i < npuNetTcpConns; i++, tp++)
         {
         tp->state = StTermIdle;
         tp->connFd = 0;
         }
 
     /*
+    ** Initialise connection type specific TCB values.
+    */
+    tp = npuTcbs;
+    for (i = 0; i < numConnTypes; i++)
+        {
+        connTypes[i].startTcb = tp;
+        numConns = connTypes[i].numConns;
+        connType = connTypes[i].connType;
+
+        for (j = 0; j < numConns; j++, tp++)
+            {
+            tp->connType = connType;
+            }
+        }
+
+    /*
     **  Setup for input data processing.
     */
-    pollIndex = npuNetTelnetConns;
+    pollIndex = npuNetTcpConns;
 
     /*
     **  Disable SIGPIPE which some non-Win32 platform generate on disconnect.
@@ -156,6 +236,7 @@ void npuNetInit(void)
     */
     npuNetCreateThread();
     }
+
 /*--------------------------------------------------------------------------
 **  Purpose:        Reset network connection handler when network is going
 **                  down.
@@ -173,7 +254,7 @@ void npuNetReset(void)
     /*
     **  Iterate through all TCBs.
     */
-    for (i = 0; i < npuNetTelnetConns; i++, tp++)
+    for (i = 0; i < npuNetTcpConns; i++, tp++)
         {
         if (tp->state != StTermIdle)
             {
@@ -250,49 +331,55 @@ void npuNetDisconnected(Tcb *tp)
 **------------------------------------------------------------------------*/
 void npuNetSend(Tcb *tp, u8 *data, int len)
     {
-#if CcTelnet
-    /*
-    **  Telnet escape processing is expensive and is disabled by default.
-    */
     u8 *p;
     int count;
 
-    for (p = data; len > 0; len -= 1)
+    switch (tp->connType)
         {
-        switch (*p++)
+    case ConnTypePterm:
+        /*
+        **  Telnet escape processing as required by Pterm.
+        */
+        for (p = data; len > 0; len -= 1)
             {
-        case 0xFF:
-            /*
-            **  Double FF to escape the Telnet IAC code making it a real FF.
-            */
-            count = p - data;
-            npuNetQueueOutput(tp, data, count);
-            npuNetQueueOutput(tp, "\xFF", 1);
-            data = p;
-            break;
-
-        case 0x0D:
-            /*
-            **  Append zero to CR otherwise real zeroes will be stripped by Telnet.
-            */
-            count = p - data;
-            npuNetQueueOutput(tp, data, count);
-            npuNetQueueOutput(tp, "\x00", 1);
-            data = p;
-            break;
+            switch (*p++)
+                {
+            case 0xFF:
+                /*
+                **  Double FF to escape the Telnet IAC code making it a real FF.
+                */
+                count = p - data;
+                npuNetQueueOutput(tp, data, count);
+                npuNetQueueOutput(tp, (u8 *)"\xFF", 1);
+                data = p;
+                break;
+                
+            case 0x0D:
+                /*
+                **  Append zero to CR otherwise real zeroes will be stripped by Telnet.
+                */
+                count = p - data;
+                npuNetQueueOutput(tp, data, count);
+                npuNetQueueOutput(tp, (u8 *)"\x00", 1);
+                data = p;
+                break;
+                }
             }
-        }
+                
+        if ((count = p - data) > 0)
+            {
+            npuNetQueueOutput(tp, data, count);
+            }
+        break;
 
-    if ((count = p - data) > 0)
-        {
-        npuNetQueueOutput(tp, data, count);
+    case ConnTypeRaw:    
+    case ConnTypeRs232:    
+        /*
+        **  Standard (non-Telnet) TCP connection.
+        */
+        npuNetQueueOutput(tp, data, len);
+        break;
         }
-#else
-    /*
-    **  Standard (non-Telnet) TCP connection.
-    */
-    npuNetQueueOutput(tp, data, len);
-#endif
     }
 
 /*--------------------------------------------------------------------------
@@ -342,6 +429,8 @@ void npuNetQueueAck(Tcb *tp, u8 blockSeqNo)
 **------------------------------------------------------------------------*/
 void npuNetCheckStatus(void)
     {
+    static fd_set readFds;
+    static fd_set writeFds;
     struct timeval timeout;
     int readySockets = 0;
     Tcb *tp;
@@ -349,7 +438,7 @@ void npuNetCheckStatus(void)
     timeout.tv_sec = 0;
     timeout.tv_usec = 0;
 
-    while (pollIndex < npuNetTelnetConns)
+    while (pollIndex < npuNetTcpConns)
         {
         tp = npuTcbs + pollIndex++;
 
@@ -451,26 +540,8 @@ void npuNetCheckStatus(void)
 static void npuNetCreateThread(void)
     {
 #if defined(_WIN32)
-    WORD versionRequested;
-    WSADATA wsaData;
-    int err;
     DWORD dwThreadId; 
     HANDLE hThread;
-
-#if 1
-// <<<<<<<<<<<<<<< should really only call this once application wide >>>>>>>>>>>>>>>>
-    /*
-    **  Select WINSOCK 1.1.
-    */ 
-    versionRequested = MAKEWORD(1, 1);
-
-    err = WSAStartup(versionRequested, &wsaData);
-    if (err != 0)
-        {
-        fprintf(stderr, "\r\nError in WSAStartup: %d\r\n", err);
-        exit(1);
-        }
-#endif
 
     /*
     **  Create TCP thread.
@@ -507,10 +578,10 @@ static void npuNetCreateThread(void)
     }
 
 /*--------------------------------------------------------------------------
-**  Purpose:        TCP thread.
+**  Purpose:        TCP network connection thread.
 **
 **  Parameters:     Name        Description.
-**                  mp          pointer to mux parameters.
+**                  param       unused
 **
 **  Returns:        Nothing.
 **
@@ -521,12 +592,15 @@ static void npuNetThread(void *param)
 static void *npuNetThread(void *param)
 #endif
     {
-    int listenFd;
+    int rc;
+    static fd_set selectFds;
+    static fd_set acceptFds;
+    int listenFd[MaxConnTypes];
     int acceptFd;
+    int maxFd = 0;
     struct sockaddr_in server;
     struct sockaddr_in from;
-    u8 i;
-    Tcb *tp;
+    int i;
     int optEnable = 1;
 #if defined(_WIN32)
     int fromLen;
@@ -535,171 +609,255 @@ static void *npuNetThread(void *param)
     socklen_t fromLen;
 #endif
 
+    FD_ZERO(&selectFds);
     /*
-    **  Create TCP socket and bind to specified port.
+    **  Create a listening socket for every configured connection type.
     */
-    listenFd = socket(AF_INET, SOCK_STREAM, 0);
-    if (listenFd < 0)
-        {
-        fprintf(stderr, "npuNet: Can't create socket\n");
-#if defined(_WIN32)
-        return;
-#else
-        return(NULL);
-#endif
-        }
-
-    setsockopt(listenFd, SOL_SOCKET, SO_REUSEADDR, (void *)&optEnable, sizeof(optEnable));
-    memset(&server, 0, sizeof(server));
-    server.sin_family = AF_INET;
-    server.sin_addr.s_addr = inet_addr("0.0.0.0");
-    server.sin_port = htons(npuNetTelnetPort);
-
-    if (bind(listenFd, (struct sockaddr *)&server, sizeof(server)) < 0)
-        {
-        fprintf(stderr, "npuNet: Can't bind to socket\n");
-#if defined(_WIN32)
-        return;
-#else
-        return(NULL);
-#endif
-        }
-
-    if (listen(listenFd, 5) < 0)
-        {
-        fprintf(stderr, "npuNet: Can't listen\n");
-#if defined(_WIN32)
-        return;
-#else
-        return(NULL);
-#endif
-        }
-
-    while (1)
+    for (i = 0; i < numConnTypes; i++)
         {
         /*
-        **  Wait for a connection.
+        **  Create TCP socket and bind to specified port.
         */
-        fromLen = sizeof(from);
-        acceptFd = accept(listenFd, (struct sockaddr *)&from, &fromLen);
-
-        /*
-        **  Set Keepalive option so that we can eventually discover if
-        **  a client has been rebooted.
-        */
-        setsockopt(acceptFd, SOL_SOCKET, SO_KEEPALIVE, (void *)&optEnable, sizeof(optEnable));
-
-        /*
-        **  Make socket non-blocking.
-        */
-#if defined(_WIN32)
-        ioctlsocket(acceptFd, FIONBIO, &blockEnable);
-#else
-        fcntl(acceptFd, F_SETFL, O_NONBLOCK);
-#endif
-
-        /*
-        **  Check if the host is ready to accept connections.
-        */
-        if (!npuSvmIsReady())
+        listenFd[i] = socket(AF_INET, SOCK_STREAM, 0);
+        if (listenFd[i] < 0)
             {
-            /*
-            **  Tell the user.
-            */
-            send(acceptFd, notReadyMsg, sizeof(notReadyMsg) - 1, 0);
-
-            /*
-            **  Wait a bit and then disconnect.
-            */
+            fprintf(stderr, "npuNet: Can't create socket\n");
         #if defined(_WIN32)
-            Sleep(2000);
-            closesocket(acceptFd);
+            return;
         #else
-            sleep(2);
-            close(acceptFd);
+            return(NULL);
         #endif
-
-            continue;
             }
+                
+        /*
+        **  Accept will block if client drops connection attempt between select and accept.
+        **  We can't block so make listening socket non-blocking to avoid this condition.
+        */
+    #if defined(_WIN32)
+        ioctlsocket(listenFd[i], FIONBIO, &blockEnable);
+    #else
+        fcntl(listenFd[i], F_SETFL, O_NONBLOCK);
+    #endif
 
         /*
-        **  Find a free TCB.
+        **  Bind to configured TCP port number
         */
-        tp = npuTcbs;
-        for (i = 0; i < npuNetTelnetConns; i++)
+        setsockopt(listenFd[i], SOL_SOCKET, SO_REUSEADDR, (void *)&optEnable, sizeof(optEnable));
+        memset(&server, 0, sizeof(server));
+        server.sin_family = AF_INET;
+        server.sin_addr.s_addr = inet_addr("0.0.0.0");
+        server.sin_port = htons(connTypes[i].tcpPort);
+                
+        if (bind(listenFd[i], (struct sockaddr *)&server, sizeof(server)) < 0)
             {
-            if (tp->state == StTermIdle)
-                {
-                break;
-                }
-
-            tp += 1;
-            }
-
-        /*
-        **  Did we find a free TCB?
-        */
-        if (i == npuNetTelnetConns)
-            {
-            /*
-            **  No free port found - tell the user.
-            */
-            send(acceptFd, noPortsAvailMsg, sizeof(noPortsAvailMsg) - 1, 0);
-
-            /*
-            **  Wait a bit and then disconnect.
-            */
+            fprintf(stderr, "npuNet: Can't bind to socket\n");
         #if defined(_WIN32)
-            Sleep(2000);
-            closesocket(acceptFd);
+            return;
         #else
-            sleep(2);
-            close(acceptFd);
+            return(NULL);
         #endif
-
-            continue;
             }
 
         /*
-        **  Mark connection as active.
+        **  Start listening for new connections on this TCP port number
         */
-        tp->connFd = acceptFd;
-        tp->state = StTermNetConnected;
-        npuLogMessage("npuNet: Received connection on port %u\n", tp->portNumber);
-
-        /*
-        **  Notify user of connect attempt.
-        */
-        send(tp->connFd, connectingMsg, sizeof(connectingMsg) - 1, 0);
-
-        /*
-        **  Attempt connection to host.
-        */
-        if (!npuSvmConnectTerminal(tp))
+        if (listen(listenFd[i], 5) < 0)
             {
-            /*
-            **  No buffers, notify user.
-            */
-            send(tp->connFd, abortMsg, sizeof(abortMsg) - 1, 0);
+            fprintf(stderr, "npuNet: Can't listen\n");
+        #if defined(_WIN32)
+            return;
+        #else
+            return(NULL);
+        #endif
+            }
 
-            /*
-            **  Wait a bit and then disconnect.
-            */
+        /*
+        **  Determine highest FD for later select
+        */
+        if (maxFd < listenFd[i])
+            {
+            maxFd = listenFd[i];
+            }
+
+        /*
+        **  Add to set of listening FDs for later select
+        */
+        FD_SET(listenFd[i], &selectFds);
+        }
+
+    for (;;)
+        {
+        /*
+        **  Wait for a connection on all sockets for the configured connection types.
+        */
+        memcpy(&acceptFds, &selectFds, sizeof(selectFds));
+        rc = select(maxFd + 1, &acceptFds, NULL, NULL, NULL);
+        if (rc <= 0)
+            {
+            fprintf(stderr, "npuNetThread: select returned unexpected %d\n", rc);
         #if defined(_WIN32)
             Sleep(1000);
-            closesocket(tp->connFd);
         #else
             sleep(1);
-            close(tp->connFd);
         #endif
-            
-            tp->state = StTermIdle;
+            continue;
+            }
+
+        /*
+        **  Find the listening socket(s) with pending connections and accept them.
+        */
+        for (i = 0; i < numConnTypes; i++)
+            {
+            if (FD_ISSET(listenFd[i], &acceptFds))
+                {
+                fromLen = sizeof(from);
+                acceptFd = accept(listenFd[i], (struct sockaddr *)&from, &fromLen);
+                if (acceptFd == -1)
+                    {
+                    printf("npuNetThread: spurious connection attempt\n");
+                    continue;
+                    }
+
+                npuNetProcessNewConnection(acceptFd, connTypes + i);
+                }
             }
         }
 
 #if !defined(_WIN32)
     return(NULL);
 #endif
+    }
+
+/*--------------------------------------------------------------------------
+**  Purpose:        Process new TCP connection
+**
+**  Parameters:     Name        Description.
+**                  acceptFd    New connection's FD
+**
+**  Returns:        Nothing.
+**
+**------------------------------------------------------------------------*/
+static void npuNetProcessNewConnection(int acceptFd, NpuConnType *ct)
+    {
+    u8 i;
+    Tcb *tp;
+    int optEnable = 1;
+#if defined(_WIN32)
+    u_long blockEnable = 1;
+#endif
+
+    /*
+    **  Set Keepalive option so that we can eventually discover if
+    **  a client has been rebooted.
+    */
+    setsockopt(acceptFd, SOL_SOCKET, SO_KEEPALIVE, (void *)&optEnable, sizeof(optEnable));
+                                
+    /*
+    **  Make socket non-blocking.
+    */
+#if defined(_WIN32)
+    ioctlsocket(acceptFd, FIONBIO, &blockEnable);
+#else
+    fcntl(acceptFd, F_SETFL, O_NONBLOCK);
+#endif
+                                
+    /*
+    **  Check if the host is ready to accept connections.
+    */
+    if (!npuSvmIsReady())
+        {
+        /*
+        **  Tell the user.
+        */
+        send(acceptFd, notReadyMsg, sizeof(notReadyMsg) - 1, 0);
+                                
+        /*
+        **  Wait a bit and then disconnect.
+        */
+    #if defined(_WIN32)
+        Sleep(2000);
+        closesocket(acceptFd);
+    #else
+        sleep(2);
+        close(acceptFd);
+    #endif
+                                
+        return;
+        }
+
+    /*
+    **  Find a free TCB in the set of ports associated with this connection type.
+    */
+    tp = ct->startTcb;
+    for (i = 0; i < ct->numConns; i++)
+        {
+        if (tp->state == StTermIdle)
+            {
+            break;
+            }
+
+        tp += 1;
+        }
+
+    /*
+    **  Did we find a free TCB?
+    */
+    if (i == ct->numConns)
+        {
+        /*
+        **  No free port found - tell the user.
+        */
+        send(acceptFd, noPortsAvailMsg, sizeof(noPortsAvailMsg) - 1, 0);
+
+        /*
+        **  Wait a bit and then disconnect.
+        */
+    #if defined(_WIN32)
+        Sleep(2000);
+        closesocket(acceptFd);
+    #else
+        sleep(2);
+        close(acceptFd);
+    #endif
+
+        return;
+        }
+
+    /*
+    **  Mark connection as active.
+    */
+    tp->connFd = acceptFd;
+    tp->state = StTermNetConnected;
+    npuLogMessage("npuNet: Received connection on port %u\n", tp->portNumber);
+
+    /*
+    **  Notify user of connect attempt.
+    */
+    send(tp->connFd, connectingMsg, sizeof(connectingMsg) - 1, 0);
+
+    /*
+    **  Attempt connection to host.
+    */
+    if (!npuSvmConnectTerminal(tp))
+        {
+        /*
+        **  No buffers, notify user.
+        */
+        send(tp->connFd, abortMsg, sizeof(abortMsg) - 1, 0);
+
+        /*
+        **  Wait a bit and then disconnect.
+        */
+    #if defined(_WIN32)
+        Sleep(1000);
+        closesocket(tp->connFd);
+    #else
+        sleep(1);
+        close(tp->connFd);
+    #endif
+            
+        tp->state = StTermIdle;
+        }
     }
 
 /*--------------------------------------------------------------------------

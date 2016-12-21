@@ -131,7 +131,7 @@
 #define MaxPpBuf                40000
 #define MaxByteBuf              60000
 #define MaxPackedConvBuf        (((256 * 8) + 11) / 12)
-#define MaxTapeSize             125000000   // this may need adjusting for shorter real tapes
+#define MaxTapeSize             1250000000   // this may need adjusting for shorter real tapes
 
 
 /*

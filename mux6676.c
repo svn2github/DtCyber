@@ -374,27 +374,12 @@ static void mux6676CreateThread(DevSlot *dp)
     {
 #if defined(_WIN32)
     static bool firstMux = TRUE;
-    WORD versionRequested;
-    WSADATA wsaData;
-    int err;
     DWORD dwThreadId; 
     HANDLE hThread;
 
     if (firstMux)
         {
         firstMux = FALSE;
-
-        /*
-        **  Select WINSOCK 1.1.
-        */ 
-        versionRequested = MAKEWORD(1, 1);
- 
-        err = WSAStartup(versionRequested, &wsaData);
-        if (err != 0)
-            {
-            fprintf(stderr, "\r\nError in WSAStartup: %d\r\n", err);
-            exit(1);
-            }
         }
 
     /*

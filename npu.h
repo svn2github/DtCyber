@@ -180,6 +180,21 @@
 #define AddrNpu         2
 
 /*
+**  NPU connection types.
+*/
+#define ConnTypeRaw     0
+#define ConnTypePterm   1
+#define ConnTypeRs232   2
+#define MaxConnTypes    3
+
+/*
+**  npuNetRegister() return codes
+*/
+#define NpuNetRegOk     0
+#define NpuNetRegOvfl   1
+#define NpuNetRegDupl   2
+
+/*
 **  Miscellaneous constants.
 */
 #define MaxBuffer       2048
@@ -330,8 +345,9 @@ typedef struct tcb
     u8                  portNumber;
     bool                active;
     bool                hostDisconnect;
-    int                 connFd;
     bool                breakPending;
+    int                 connFd;
+    u8                  connType;
 
     /*
     **  Configuration.
@@ -436,6 +452,7 @@ void npuTipNotifySent(Tcb *tp, u8 blockSeqNo);
 /*
 **  npu_net.c
 */
+int npuNetRegister(int tcpPort, int numConns, int connType);
 void npuNetInit(void);
 void npuNetReset(void);
 void npuNetConnected(Tcb *tp);

@@ -57,6 +57,7 @@ OBJS    =   channel.o               \
             lp3000.o                \
             main.o                  \
             maintenance_channel.o   \
+            mt362x.o                \
             mt607.o                 \
             mt669.o                 \
             mt679.o                 \

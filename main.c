@@ -36,6 +36,7 @@
 #include "proto.h"
 #if defined(_WIN32)
 #include <windows.h>
+#include <winsock.h>
 #else
 #include <unistd.h>
 #endif
@@ -104,6 +105,24 @@ double cycleTime;
 **------------------------------------------------------------------------*/
 int main(int argc, char **argv)
     {
+#if defined(_WIN32)
+    /*
+    **  Select WINSOCK 1.1.
+    */ 
+    WORD versionRequested;
+    WSADATA wsaData;
+    int err;
+
+    versionRequested = MAKEWORD(1, 1);
+
+    err = WSAStartup(versionRequested, &wsaData);
+    if (err != 0)
+        {
+        fprintf(stderr, "\r\nError in WSAStartup: %d\r\n", err);
+        exit(1);
+        }
+#endif
+
     (void)argc;
     (void)argv;
 

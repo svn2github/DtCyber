@@ -783,6 +783,7 @@ static void lp3000Io(void)
     switch (active3000Device->fcode)
         {
     default:
+        activeChannel->full = FALSE;
         break;
 
     case Fc6681Output:

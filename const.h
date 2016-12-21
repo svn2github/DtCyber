@@ -30,7 +30,7 @@
 **  Public Constants
 **  ----------------
 */
-#define DtCyberVersion          "Desktop CYBER 5.4.1"
+#define DtCyberVersion          "Desktop CYBER 5.5.0"
 #define DtCyberCopyright        "Copyright (C) Tom Hunter"
 #define DtCyberLicense          "Licensed under the terms of the GNU General Public License version 3"
 #define DtCyberLicenseDetails	"For details see included text file 'license-gpl-3.0.txt' or visit\n" \
@@ -56,7 +56,7 @@
 /*
 **  Large screen support.
 */
-#define CcLargeWin32Screen      0
+#define CcLargeWin32Screen      1
 
 /*
 **  Debug support
@@ -67,11 +67,6 @@
 **  Measure cycle time
 */
 #define CcCycleTime             0
-
-/*
-**  Use Telnet protocol for NPU connections
-*/
-#define CcTelnet                0
 
 /*
 **  Device types.
@@ -123,8 +118,6 @@
 #define MaxChannels             040
 
 #define MaxIwStack              12
-
-#define NEWLINE                 "\n"
 
 #define FontLarge               32
 #define FontMedium              16

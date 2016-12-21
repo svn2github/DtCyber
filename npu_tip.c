@@ -275,7 +275,7 @@ void npuTipInit(void)
     /*
     **  Allocate TCBs.
     */
-    npuTcbCount = npuNetTelnetConns;
+    npuTcbCount = npuNetTcpConns;
     npuTcbs = calloc(npuTcbCount, sizeof(Tcb));
     if (npuTcbs == NULL)
         {
@@ -294,7 +294,7 @@ void npuTipInit(void)
     **  Initialise TCBs.
     */
     tp = npuTcbs;
-    for (i = 0; i < npuNetTelnetConns; i++, tp++)
+    for (i = 0; i < npuNetTcpConns; i++, tp++)
         {
         tp->portNumber = i + 1;
         tp->params = defaultTc3;
@@ -324,7 +324,7 @@ void npuTipReset(void)
     /*
     **  Iterate through all TCBs.
     */
-    for (i = 0; i < npuNetTelnetConns; i++, tp++)
+    for (i = 0; i < npuNetTcpConns; i++, tp++)
         {
         memset(tp, 0, sizeof(Tcb));
         tp->portNumber = i + 1;
@@ -635,7 +635,7 @@ bool npuTipParseFnFv(u8 *mp, int len, Tcb *tp)
             pp->fvXTimeout = mp[1] != 0;
             break;
 
-        case FnTdXModeMultiple:  // Transparent input mode; multiple (1), singe (0)
+        case FnTdXModeMultiple:  // Transparent input mode; multiple (1), single (0)
             pp->fvXModeMultiple = mp[1] != 0;
             break;
 
@@ -713,6 +713,7 @@ bool npuTipParseFnFv(u8 *mp, int len, Tcb *tp)
 
         case FnTdParity:         // Zero (0), odd (1), even (2), none (3), ignore (4)
             pp->fvParity = mp[1];
+            // printf("Term = %u, Parity = %u\n", tp->portNumber, mp[1]); fflush(stdout);
             break;
 
         case FnTdPG:             // Page waiting; yes (1), no (0)
