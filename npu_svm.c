@@ -65,7 +65,7 @@
 #define PfcVCS          0x18    // svc status request       
 #define PfcSTU          0x19    // unsolicated statuses    
 #define PfcSTI          0x1A    // statistics              
-#define PfcMSG          0x1B    // messsbge(s)             
+#define PfcMSG          0x1B    // message(s)             
 #define PfcLOG          0x1C    // error log entry         
 #define PfcALM          0x1D    // operator alarm          
 #define PfcNPI          0x1E    // reload npu               

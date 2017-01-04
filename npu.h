@@ -453,7 +453,7 @@ void npuTipNotifySent(Tcb *tp, u8 blockSeqNo);
 **  npu_net.c
 */
 int npuNetRegister(int tcpPort, int numConns, int connType);
-void npuNetInit(void);
+void npuNetInit(bool startup);
 void npuNetReset(void);
 void npuNetConnected(Tcb *tp);
 void npuNetDisconnected(Tcb *tp);

@@ -181,11 +181,13 @@ int npuNetRegister(int tcpPort, int numConns, int connType)
 **  Purpose:        Initialise network connection handler.
 **
 **  Parameters:     Name        Description.
+**                  startup     FALSE when restarting (NAM restart),
+**                              TRUE on first call during initialisation.
 **
 **  Returns:        Nothing.
 **
 **------------------------------------------------------------------------*/
-void npuNetInit(void)
+void npuNetInit(bool startup)
     {
     int i;
     int j;
@@ -225,16 +227,22 @@ void npuNetInit(void)
     pollIndex = npuNetTcpConns;
 
     /*
-    **  Disable SIGPIPE which some non-Win32 platform generate on disconnect.
+    **  Only do the following when the emulator starts up.
     */
-    #ifndef WIN32
-    signal(SIGPIPE, SIG_IGN);
-    #endif
-
-    /*
-    **  Create the thread which will deal with TCP connections.
-    */
-    npuNetCreateThread();
+    if (startup)
+        {
+        /*
+        **  Disable SIGPIPE which some non-Win32 platform generate on disconnect.
+        */
+        #ifndef WIN32
+        signal(SIGPIPE, SIG_IGN);
+        #endif
+                
+        /*
+        **  Create the thread which will deal with TCP connections.
+        */
+        npuNetCreateThread();
+        }
     }
 
 /*--------------------------------------------------------------------------

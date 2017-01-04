@@ -305,7 +305,7 @@ void npuTipInit(void)
     /*
     **  Initialise network.
     */
-    npuNetInit();
+    npuNetInit(TRUE);
     }
 
 /*--------------------------------------------------------------------------
@@ -332,6 +332,11 @@ void npuTipReset(void)
         tp->tipType = TtASYNC;
         npuTipInputReset(tp);
         }
+
+    /*
+    **  Re-initialise network.
+    */
+    npuNetInit(FALSE);
     }
 
 /*--------------------------------------------------------------------------
