@@ -735,7 +735,11 @@ static void cr3447NextCard (DevSlot *up, CrContext *cc)
         */
         for (i = 0; i < 80; i++)
             {
-            cc->card[i] = buffer[i];
+            c = buffer[i];
+            /*
+            **  Convert any non-ASCII characters to blank.
+            */
+            cc->card[i] = (c & 0x80) ? ' ' : c;
             }
         }
     else
